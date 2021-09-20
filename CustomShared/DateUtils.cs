@@ -10,7 +10,7 @@ namespace CustomShared
     {
         public static string NyTzStringSpecifier = "America/New_York";
         public static readonly DateTimeZone NyDateTz = DateTimeZoneProviders.Tzdb[NyTzStringSpecifier];
-        public static readonly TimeZoneInfo NyTzInfo = TimeZoneInfo.FindSystemTimeZoneById(NyTzStringSpecifier);
+        // public static readonly TimeZoneInfo NyTzInfo = TimeZoneInfo.FindSystemTimeZoneById(NyTzStringSpecifier);
         public static readonly string YYYYMMDDString = "yyyy-MM-dd";
         public static readonly string TimePattern = "HH:mm";
 
@@ -54,12 +54,16 @@ namespace CustomShared
             if (dateInUtc.Kind != DateTimeKind.Utc)
                 throw new Exception("Passed datetime must be UTC kind.");
 
-            return TimeZoneInfo.ConvertTimeFromUtc(dateInUtc, NyTzInfo);
+            return CreateNyDateTime(dateInUtc).LocalDateTime.ToDateTimeUnspecified();
+            // return TimeZoneInfo.ConvertTimeFromUtc(dateInUtc, NyTzInfo);
         }
 
         // ignores input dateTime type.
         public static DateTime ConvertToUtcFromNy(this DateTime dateTime)
-            => TimeZoneInfo.ConvertTimeToUtc(dateTime, NyTzInfo);
+        {
+            return new ZonedDateTime(dateTime.ToInstant(), NyDateTz).ToDateTimeUtc();
+            // return TimeZoneInfo.ConvertTimeToUtc(dateTime, NyTzInfo);
+        }
 
         public static LocalDate ParseToLocalDate(this string formattedDateStr)
             => LocalDatePattern.Parse(formattedDateStr).Value;

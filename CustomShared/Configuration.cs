@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using CustomShared;
 
 namespace CustomShared
 {
@@ -13,7 +12,7 @@ namespace CustomShared
 
         public static ConfigVariables TestInstance => _testInstance;
 
-        public string MarketDayClosedListDir { get; private set; }
+        public string MarketDayClosedListDir { get; init; }
         public string ProjectBaseDir { get; private set; }
         public string LogConfigFile { get; private set; }
         public string TestDataDirectory { get; private set; }
