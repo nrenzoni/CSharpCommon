@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using log4net;
 using NodaTime;
 using NodaTime.Extensions;
 using NodaTime.Text;
@@ -8,8 +9,12 @@ namespace CustomShared
 {
     public static class DateUtils
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(DateUtils));
+
         public static string NyTzStringSpecifier = "America/New_York";
+
         public static readonly DateTimeZone NyDateTz = DateTimeZoneProviders.Tzdb[NyTzStringSpecifier];
+
         // public static readonly TimeZoneInfo NyTzInfo = TimeZoneInfo.FindSystemTimeZoneById(NyTzStringSpecifier);
         public static readonly string YYYYMMDDString = "yyyy-MM-dd";
         public static readonly string TimePattern = "HH:mm";
@@ -41,7 +46,19 @@ namespace CustomShared
 
         public static ZonedDateTime CreateNyDateTime(this DateTime dateTime)
         {
-            return new(dateTime.ToUniversalTime().ToInstant(), NyDateTz);
+            if (dateTime.Kind == DateTimeKind.Local)
+            {
+                return LocalDateTime.FromDateTime(dateTime).InZoneStrictly(NyDateTz);
+            }
+
+            if (dateTime.Kind == DateTimeKind.Unspecified)
+            {
+                Log.Warn($"datetime kind is unspecified for {dateTime}. Coercing to Utc.");
+                dateTime = DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+            }
+
+            var instant = Instant.FromDateTimeUtc(dateTime);
+            return instant.InZone(NyDateTz);
         }
 
         public static DateTime AtLastMinuteOfDay(this DateTime dateTime)
