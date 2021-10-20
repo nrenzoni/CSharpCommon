@@ -8,9 +8,10 @@ namespace CustomShared
 {
     public static class LogConfig
     {
-        public static void Load()
+        public static void Load(string logFile)
         {
-            var logConfig = ConfigVariables.Instance.LogConfigFile;
+            // var logConfig = ConfigVariables.Instance.LogConfigFile;
+            var logConfig = logFile;
             if (logConfig == null)
             {
                 throw new Exception("Log not configured! Set path to config file in env variable: LOG_CONFIG_FILE.");

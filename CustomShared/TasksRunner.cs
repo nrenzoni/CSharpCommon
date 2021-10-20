@@ -18,17 +18,19 @@ namespace CustomShared
             }
         }
 
-        public static void PopFinishedTaskAndRecordErrors(IList<Task> runningTasks)
+        // returns finished task id
+        public static int? PopFinishedTaskAndRecordErrors(IList<Task> runningTasks)
         {
             int finishedIndex = Task.WaitAny(runningTasks.ToArray());
 
             if (finishedIndex < 0)
-                return;
+                return null;
 
             var finishedTask = runningTasks[finishedIndex];
             runningTasks.Remove(finishedTask);
 
-            if (finishedTask.Status != TaskStatus.Faulted) return;
+            if (finishedTask.Status != TaskStatus.Faulted)
+                return finishedTask.Id;
 
             if (IsTestGlobalChecker.IsTest)
                 throw new Exception("Caught exception in task", finishedTask.Exception.InnerException);
@@ -39,6 +41,8 @@ namespace CustomShared
             {
                 Log.Error($"\t{exceptionCounter++}: {ex.Message}");
             }
+
+            return finishedTask.Id;
         }
     }
 }

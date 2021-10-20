@@ -82,8 +82,8 @@ namespace CustomShared
 
         public List<LocalDate> GetMarketOpenDaysInRange(LocalDate startDate, LocalDate endDate)
         {
-            if (startDate >= endDate)
-                throw new Exception($"param {nameof(startDate)} must have value below {nameof(endDate)}");
+            if (startDate > endDate)
+                throw new Exception($"param {nameof(startDate)} must have value below or equal to {nameof(endDate)}");
 
             var marketOpenDaysInRange = new List<LocalDate>();
 
@@ -123,12 +123,12 @@ namespace CustomShared
 
     public class YearNonWeekendClosedDayChecker : IYearNonWeekendClosedDayChecker
     {
-        private readonly ConfigVariables _configVariables;
+        private readonly string _marketDayClosedListDir;
         static readonly Dictionary<uint, YearNonWeekendClosedDays> Instances = new();
 
-        public YearNonWeekendClosedDayChecker(ConfigVariables configVariables)
+        public YearNonWeekendClosedDayChecker(string marketDayClosedListDir)
         {
-            _configVariables = configVariables;
+            _marketDayClosedListDir = marketDayClosedListDir;
         }
 
         public bool IsNonWeekendClosedAllDay(LocalDate date)
@@ -138,7 +138,7 @@ namespace CustomShared
             // lazy load all closed day data for year
             if (!Instances.ContainsKey(dateYear))
             {
-                var marketClosedDays = new YearNonWeekendClosedDays(dateYear, _configVariables);
+                var marketClosedDays = new YearNonWeekendClosedDays(dateYear, _marketDayClosedListDir);
                 Instances.Add(dateYear, marketClosedDays);
             }
 
@@ -153,14 +153,14 @@ namespace CustomShared
 
     public class YearNonWeekendClosedDays
     {
-        private readonly ConfigVariables _configVariables;
+        private readonly string _marketDayClosedListDir;
 
         private readonly Dictionary<LocalDate, MarketClosedDay> _closedDays;
 
-        public YearNonWeekendClosedDays(uint year, ConfigVariables configVariables)
+        public YearNonWeekendClosedDays(uint year, string marketDayClosedListDir)
         {
             Year = year;
-            _configVariables = configVariables;
+            _marketDayClosedListDir = marketDayClosedListDir;
 
             _closedDays = LoadFromFile(year).ToDictionary(x => x.Date, x => x);
         }
@@ -174,7 +174,7 @@ namespace CustomShared
 
         public List<MarketClosedDay> LoadFromFile(uint year)
         {
-            var marketDayDir = _configVariables.MarketDayClosedListDir;
+            var marketDayDir = _marketDayClosedListDir;
             if (!Directory.Exists(marketDayDir))
                 throw new DirectoryNotFoundException($"Directory doesn't exist: [{marketDayDir}].");
 
