@@ -25,7 +25,9 @@ public static class DateUtils
     public static readonly LocalTimePattern LocalTimePattern =
         LocalTimePattern.CreateWithCurrentCulture(TimePattern);
 
-    public static IList<LocalDate> EachLocalDay(LocalDate from, LocalDate thru)
+    public static IList<LocalDate> EachLocalDay(
+        LocalDate from,
+        LocalDate thru)
     {
         List<LocalDate> dates = new();
         for (var day = from; day <= thru; day += Period.FromDays(1))
@@ -33,38 +35,54 @@ public static class DateUtils
         return dates;
     }
 
-    public static TimeSpan ToTimeSpan(this LocalTime time)
+    public static TimeSpan ToTimeSpan(
+        this LocalTime time)
         => TimeSpan.FromTicks(time.TickOfDay);
 
-    public static string ToYYYYMMDD(this DateTime dateTime)
+    public static string ToYYYYMMDD(
+        this DateTime dateTime)
         => dateTime.ToString("yyyy-MM-dd");
 
-    public static string ToYYYYMMDD(this LocalDate date)
+    public static string ToYYYYMMDD(
+        this LocalDate date)
     {
-        return date.ToString(YYYYMMDDString, null);
+        return date.ToString(
+            YYYYMMDDString,
+            null);
     }
 
-    public static DateTime ForceDateTimeUtc(this DateTime dateTime)
-        => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+    public static DateTime ForceDateTimeUtc(
+        this DateTime dateTime)
+        => DateTime.SpecifyKind(
+            dateTime,
+            DateTimeKind.Utc);
 
-    public static ZonedDateTime CreateNyDateTime(this DateTime dateTime)
+    public static ZonedDateTime CreateNyDateTime(
+        this DateTime dateTime,
+        bool nyTimeAlready = false)
     {
-        if (dateTime.Kind == DateTimeKind.Local)
+        if (dateTime.Kind == DateTimeKind.Local || nyTimeAlready)
         {
             return LocalDateTime.FromDateTime(dateTime).InZoneStrictly(NyDateTz);
         }
 
         if (dateTime.Kind == DateTimeKind.Unspecified)
         {
-            Log.Warn($"datetime kind is unspecified for {dateTime}. Coercing to Utc.");
-            dateTime = DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+            Log.Warn($"datetime kind is unspecified for {dateTime}. Treating as UTC time.");
+            dateTime = DateTime.SpecifyKind(
+                dateTime,
+                DateTimeKind.Utc);
         }
+
+        if (dateTime.Kind is not DateTimeKind.Utc)
+            throw new Exception("Expecting UTC time at this point.");
 
         var instant = Instant.FromDateTimeUtc(dateTime);
         return instant.InZone(NyDateTz);
     }
 
-    public static ZonedDateTime MillisSinceEpochToNyTzDatetime(this long millisSinceEpoch)
+    public static ZonedDateTime MillisSinceEpochToNyTzDatetime(
+        this long millisSinceEpoch)
     {
         return Instant.FromUnixTimeMilliseconds(millisSinceEpoch).InZone(NyDateTz);
     }
@@ -79,12 +97,17 @@ public static class DateUtils
         return SystemClock.Instance.GetCurrentInstant();
     }
 
-    public static DateTime AtLastMinuteOfDay(this DateTime dateTime)
+    public static DateTime AtLastMinuteOfDay(
+        this DateTime dateTime)
     {
-        return dateTime.Date + new TimeSpan(23, 59, 59);
+        return dateTime.Date + new TimeSpan(
+            23,
+            59,
+            59);
     }
 
-    public static DateTime ConvertToNyTimeFromUtc(DateTime dateInUtc)
+    public static DateTime ConvertToNyTimeFromUtc(
+        DateTime dateInUtc)
     {
         if (dateInUtc.Kind != DateTimeKind.Utc)
             throw new Exception("Passed datetime must be UTC kind.");
@@ -94,19 +117,27 @@ public static class DateUtils
     }
 
     // ignores input dateTime type.
-    public static DateTime ConvertToUtcFromNy(this DateTime dateTime)
+    public static DateTime ConvertToUtcFromNy(
+        this DateTime dateTime)
         => NyDateTz.AtStrictly(LocalDateTime.FromDateTime(dateTime)).ToDateTimeUtc();
 
-    public static LocalDate ParseToLocalDate(this string formattedDateStr)
+    public static LocalDate ParseToLocalDate(
+        this string formattedDateStr)
         => LocalDatePattern.Parse(formattedDateStr).Value;
 
-    public static LocalTime ParseToLocalTime(this string formattedTimeStr)
+    public static LocalTime ParseToLocalTime(
+        this string formattedTimeStr)
         => LocalTimePattern.Parse(formattedTimeStr).Value;
 
-    public static string ToTimeString(this LocalTime time)
-        => time.ToString("HH:mm:ss", null);
+    public static string ToTimeString(
+        this LocalTime time)
+        => time.ToString(
+            "HH:mm:ss",
+            null);
 
-    public static LocalDate GetWorkdayOffset(this LocalDate date, int dayOffset)
+    public static LocalDate GetWorkdayOffset(
+        this LocalDate date,
+        int dayOffset)
     {
         if (dayOffset == 0)
             throw new Exception("dayOffset must be integer != 0");
@@ -115,36 +146,67 @@ public static class DateUtils
         {
             do
             {
-                date = date + Period.FromDays(Math.Sign(dayOffset));
+                date += Period.FromDays(Math.Sign(dayOffset));
             } while (IsWeekend(date));
         }
 
         return date;
     }
 
-    public static LocalDate GetPreviousWorkDay(this LocalDate date)
+    public static LocalDate GetPreviousWorkDay(
+        this LocalDate date)
         => date.GetWorkdayOffset(-1);
 
-    public static bool IsWeekend(LocalDate date)
+    public static bool IsWeekend(
+        LocalDate date)
     {
         return date.DayOfWeek == IsoDayOfWeek.Saturday ||
                date.DayOfWeek == IsoDayOfWeek.Sunday;
     }
 
-    public static DateTime RoundToTicks(this DateTime target, long ticks) =>
-        new DateTime((target.Ticks + ticks / 2) / ticks * ticks, target.Kind);
+    public static DateTime RoundToTicks(
+        this DateTime target,
+        long ticks) =>
+        new DateTime(
+            (target.Ticks + ticks / 2) / ticks * ticks,
+            target.Kind);
 
-    public static DateTime RoundUpToTicks(this DateTime target, long ticks) =>
-        new DateTime((target.Ticks + ticks - 1) / ticks * ticks, target.Kind);
+    public static DateTime RoundUpToTicks(
+        this DateTime target,
+        long ticks) =>
+        new DateTime(
+            (target.Ticks + ticks - 1) / ticks * ticks,
+            target.Kind);
 
-    public static DateTime RoundDownToTicks(this DateTime target, long ticks) =>
-        new DateTime(target.Ticks / ticks * ticks, target.Kind);
+    public static DateTime RoundDownToTicks(
+        this DateTime target,
+        long ticks) =>
+        new DateTime(
+            target.Ticks / ticks * ticks,
+            target.Kind);
 
-    public static DateTime Round(this DateTime target, TimeSpan round) => RoundToTicks(target, round.Ticks);
-    public static DateTime RoundUp(this DateTime target, TimeSpan round) => RoundUpToTicks(target, round.Ticks);
-    public static DateTime RoundDown(this DateTime target, TimeSpan round) => RoundDownToTicks(target, round.Ticks);
+    public static DateTime Round(
+        this DateTime target,
+        TimeSpan round) => RoundToTicks(
+        target,
+        round.Ticks);
 
-    public static List<LocalTime> GetTimesInInterval(LocalTime firstTime, LocalTime lastTime, Period period)
+    public static DateTime RoundUp(
+        this DateTime target,
+        TimeSpan round) => RoundUpToTicks(
+        target,
+        round.Ticks);
+
+    public static DateTime RoundDown(
+        this DateTime target,
+        TimeSpan round) => RoundDownToTicks(
+        target,
+        round.Ticks);
+
+    public static List<LocalTime> GetTimesInInterval(
+        LocalTime firstTime,
+        LocalTime lastTime,
+        Period period)
     {
         var times = new List<LocalTime>();
         var currentTime = firstTime;
@@ -157,20 +219,24 @@ public static class DateUtils
         return times;
     }
 
-    public static LocalDate GetNyDate(this Instant instant) => instant.InZone(NyDateTz).Date;
-    
-    public static LocalTime GetNyLocalTime(this Instant instant) => instant.InZone(NyDateTz).TimeOfDay;
+    public static LocalDate GetNyDate(
+        this Instant instant) => instant.InZone(NyDateTz).Date;
+
+    public static LocalTime GetNyLocalTime(
+        this Instant instant) => instant.InZone(NyDateTz).TimeOfDay;
 
     public static ZonedDateTime ToNyTime(
         this LocalDateTime localDateTime)
         => localDateTime.InZoneStrictly(NyDateTz);
 
-    public static List<LocalDate> RangeOfDates(LocalDate beginDate, LocalDate endDate)
+    public static List<LocalDate> RangeOfDatesInclLast(
+        LocalDate beginDate,
+        LocalDate endDateExcl)
     {
         List<LocalDate> dates = new();
         var oneDay = Period.FromDays(1);
         var date = beginDate;
-        while (date < endDate)
+        while (date <= endDateExcl)
         {
             dates.Add(date);
             date += oneDay;
@@ -178,9 +244,27 @@ public static class DateUtils
 
         return dates;
     }
-    
+
+    public static List<LocalDate> RangeOfDatesExclLast(
+        LocalDate beginDate,
+        LocalDate endDateExcl)
+    {
+        List<LocalDate> dates = new();
+        var oneDay = Period.FromDays(1);
+        var date = beginDate;
+        while (date < endDateExcl)
+        {
+            dates.Add(date);
+            date += oneDay;
+        }
+
+        return dates;
+    }
+
     public static IEnumerable<Instant> GetInstantsInRange(
-        Instant startRange, Instant endRange, Duration offset)
+        Instant startRange,
+        Instant endRange,
+        Duration offset)
     {
         Instant nextInstant = startRange;
         while (nextInstant < endRange)
@@ -188,5 +272,36 @@ public static class DateUtils
             yield return nextInstant;
             nextInstant += offset;
         }
+    }
+
+    public static string ToStringFull(
+        this Instant instant)
+    {
+        return instant.ToString(
+            "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffff'Z'",
+            null);
+    }
+
+    public static string ToStringFullDbSafe(
+        this Instant instant)
+    {
+        return instant.ToString(
+            "yyyy'_'MM'_'dd'T'HH'_'mm'_'ss'_'fffffff'Z'",
+            null);
+    }
+
+    public static string ToStringNyTz(
+        this Instant instant,
+        bool includeSubSecond = false)
+    {
+        var subSecondPortion = includeSubSecond
+            ? "'.'fffffff'Z'"
+            : "";
+
+        var pattern = $"yyyy'-'MM'-'dd'T'HH':'mm':'ss{subSecondPortion} 'NY'";
+        return instant.InZone(NyDateTz)
+            .ToString(
+                pattern,
+                null);
     }
 }

@@ -24,6 +24,6 @@ public class JsonUtils
         {
             MissingMemberHandling = MissingMemberHandling.Error
         };
-        return JsonConvert.DeserializeObject<T>(serialized);
+        return JsonConvert.DeserializeObject<T>(serialized, settings);
     }
 }

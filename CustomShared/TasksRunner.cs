@@ -19,8 +19,8 @@ public class TasksRunner
         }
     }
 
-    // returns finished task id
-    public static int PopFinishedTaskAndRecordErrors(IList<Task> runningTasks)
+    // returns finished task id if no exception thrown 
+    public static int PopFinishedTaskAndRecordErrors(IList<Task> runningTasks, bool rethrowException = true)
     {
         int finishedIndex = Task.WaitAny(runningTasks.ToArray());
         
@@ -33,7 +33,7 @@ public class TasksRunner
         if (finishedTask.Status != TaskStatus.Faulted)
             return finishedTask.Id;
 
-        if (IsTestGlobalChecker.IsTest)
+        if (rethrowException)
             throw new Exception("Caught exception in task", finishedTask.Exception.InnerException);
 
         Log.Error($"Caught exception(s) in task:");

@@ -37,17 +37,20 @@ public static class ConfigVariableUtils
         return builtEnvironmentVariables;
     }
 
-    public static string ConvertPropertyNameToEnvName(string propertyName)
+    public static string ConvertPropertyNameToEnvName(
+        string propertyName)
     {
         var val = propertyName.CamelCaseToUnderscoreCase();
         return val.ToUpper();
     }
 
-    public static string GetEnvironmentVariable(string name, bool throwExpIfNull = true)
+    public static string GetEnvironmentVariable(
+        string name,
+        bool throwExpIfNull = true)
     {
         var val = Environment.GetEnvironmentVariable(name);
         if (throwExpIfNull && val == null)
-            throw new Exception($"Env variable {name} is not assigned.");
+            throw new Exception($"Env variable {name} is not assigned. (Perhaps env file was not loaded.");
         return val;
     }
 }
@@ -64,7 +67,10 @@ public class ConfigVariables : IConfigVariables
 {
     private static readonly ConfigVariables _prodInstance = ConfigVariableUtils.LoadFromEnv<ConfigVariables>();
     private static readonly ConfigVariables _testInstance = MakeTestConfigVariables<ConfigVariables>();
-    public static ConfigVariables Instance => IsTestGlobalChecker.IsTest ? _testInstance : _prodInstance;
+
+    public static ConfigVariables Instance => IsTestGlobalChecker.IsTest
+        ? _testInstance
+        : _prodInstance;
 
     public static ConfigVariables TestInstance => _testInstance;
 
