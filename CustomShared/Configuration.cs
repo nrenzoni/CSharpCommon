@@ -23,7 +23,8 @@ public static class ConfigVariableUtils
             else if (propertyInfo.PropertyType == typeof(uint))
                 parsedVal = uint.Parse(value);
             else if (propertyInfo.PropertyType == typeof(string[]))
-                parsedVal = value.Split(";",
+                parsedVal = value.Split(
+                    ";",
                     StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             else
                 throw new Exception(
@@ -31,7 +32,9 @@ public static class ConfigVariableUtils
                     $"for property {propertyInfo.Name} is not supported. " +
                     $"Implement here in code!");
 
-            propertyInfo.SetValue(builtEnvironmentVariables, parsedVal);
+            propertyInfo.SetValue(
+                builtEnvironmentVariables,
+                parsedVal);
         }
 
         return builtEnvironmentVariables;
@@ -60,9 +63,15 @@ public interface IConfigVariables
 }
 
 // ReSharper disable UnassignedGetOnlyAutoProperty UnusedMember.Global UnusedAutoPropertyAccessor.Local AutoPropertyCanBeMadeGetOnly.Local
-[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
-[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-[SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Global")]
+[SuppressMessage(
+    "ReSharper",
+    "UnusedAutoPropertyAccessor.Global")]
+[SuppressMessage(
+    "ReSharper",
+    "MemberCanBePrivate.Global")]
+[SuppressMessage(
+    "ReSharper",
+    "AutoPropertyCanBeMadeGetOnly.Global")]
 public class ConfigVariables : IConfigVariables
 {
     private static readonly ConfigVariables _prodInstance = ConfigVariableUtils.LoadFromEnv<ConfigVariables>();
@@ -79,8 +88,31 @@ public class ConfigVariables : IConfigVariables
     public string LogConfigFile { get; protected set; }
     public string TestDataDirectory { get; protected set; }
 
-
     public string MongoConn { get; protected set; } = "mongodb://localhost:27017/?compressors=zstd";
+
+    public string[] RepoBackends { get; protected set; } = { "CLICKHOUSE" };
+
+    protected static T MakeTestConfigVariables<T>() where T : ConfigVariables, new()
+    {
+        var configVariables = ConfigVariableUtils.LoadFromEnv<T>();
+        return configVariables;
+    }
+}
+
+public class MongoTiRetrieverSpecificConfigVariables : ConfigVariables
+{
+    private static readonly MongoTiRetrieverSpecificConfigVariables _prodInstance
+        = ConfigVariableUtils.LoadFromEnv<MongoTiRetrieverSpecificConfigVariables>();
+
+    private static readonly MongoTiRetrieverSpecificConfigVariables _testInstance
+        = MakeTestConfigVariables<MongoTiRetrieverSpecificConfigVariables>();
+
+    public new static MongoTiRetrieverSpecificConfigVariables Instance => IsTestGlobalChecker.IsTest
+        ? _testInstance
+        : _prodInstance;
+
+    public new static MongoTiRetrieverSpecificConfigVariables TestInstance => _testInstance;
+
     public string MongoTradeIdeasDb { get; protected set; } = "trade_ideas";
 
     public string MongoLogEntryDb { get; protected set; } = "logs";
@@ -90,6 +122,30 @@ public class ConfigVariables : IConfigVariables
     public uint MongoSaverBatchSize { get; protected set; } = 10000;
     public uint NMongoSavers { get; protected set; }
     public uint NMongoLogFlushSize { get; protected set; } = 1000;
+
+    protected new static T MakeTestConfigVariables<T>() where T : MongoTiRetrieverSpecificConfigVariables, new()
+    {
+        var configVariables = ConfigVariableUtils.LoadFromEnv<T>();
+        configVariables.MongoTradeIdeasDb = "trade_ideas_test";
+        configVariables.MongoLogEntryDb = "logs_test";
+
+        return configVariables;
+    }
+}
+
+public class ClickhouseConfigVariables : ConfigVariables
+{
+    private static readonly ClickhouseConfigVariables _prodInstance
+        = ConfigVariableUtils.LoadFromEnv<ClickhouseConfigVariables>();
+
+    private static readonly ClickhouseConfigVariables _testInstance
+        = MakeTestConfigVariables<ClickhouseConfigVariables>();
+
+    public new static ClickhouseConfigVariables Instance => IsTestGlobalChecker.IsTest
+        ? _testInstance
+        : _prodInstance;
+
+    public new static ClickhouseConfigVariables TestInstance => _testInstance;
 
     public string ClickhouseHost { get; protected set; }
     public string ClickhouseUser { get; protected set; }
@@ -103,15 +159,11 @@ public class ConfigVariables : IConfigVariables
 
     public uint ClickhouseSaverBatchSize { get; protected set; } = 10000;
 
-    public string[] RepoBackends { get; protected set; } = { "CLICKHOUSE" };
-
-    protected static T MakeTestConfigVariables<T>() where T : ConfigVariables, new()
+    protected new static T MakeTestConfigVariables<T>() where T : ClickhouseConfigVariables, new()
     {
         var configVariables = ConfigVariableUtils.LoadFromEnv<T>();
-        configVariables.MongoTradeIdeasDb = "trade_ideas_test";
         configVariables.ClickhouseAlertsTable = "ti_test.alerts";
         configVariables.ClickhouseTopListTable = "ti_test.top_list";
-        configVariables.MongoLogEntryDb = "logs_test";
 
         return configVariables;
     }
