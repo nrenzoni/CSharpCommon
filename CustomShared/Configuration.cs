@@ -89,9 +89,7 @@ public class ConfigVariables : IConfigVariables
     public string TestDataDirectory { get; protected set; }
 
     public string MongoConn { get; protected set; } = "mongodb://localhost:27017/?compressors=zstd";
-
-    public string[] RepoBackends { get; protected set; } = { "CLICKHOUSE" };
-
+    
     protected static T MakeTestConfigVariables<T>() where T : ConfigVariables, new()
     {
         var configVariables = ConfigVariableUtils.LoadFromEnv<T>();
