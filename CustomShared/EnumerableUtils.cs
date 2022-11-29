@@ -144,4 +144,49 @@ public static class EnumerableUtils
             }
         }
     }
+
+    // https://stackoverflow.com/a/1581482/3262950
+    public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> source)
+    {
+        var previous = default(T);
+
+        using var it = source.GetEnumerator();
+
+        if (it.MoveNext())
+            previous = it.Current;
+
+        while (it.MoveNext())
+            yield return (previous, previous = it.Current);
+    }
+
+    // https://stackoverflow.com/a/4831908/3262950
+    public static IEnumerable<decimal> CumulativeSum(this IEnumerable<decimal> sequence)
+    {
+        decimal sum = 0;
+        foreach (var item in sequence)
+        {
+            sum += item;
+            yield return sum;
+        }
+    }
+    
+    public static bool IsOrdered<T>(this IList<T> list, IComparer<T> comparer = null)
+    {
+        if (comparer == null)
+        {
+            comparer = Comparer<T>.Default;
+        }
+
+        if (list.Count > 1)
+        {
+            for (int i = 1; i < list.Count; i++)
+            {
+                if (comparer.Compare(list[i - 1], list[i]) > 0)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }

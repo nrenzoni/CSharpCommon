@@ -124,6 +124,19 @@ public static class BinarySearchHelpers
             list.Count);
     }
 
+    public static BinarySearchResult CustomBinarySearch<T>(
+        this List<T> list,
+        T value)
+    {
+        var binarySearchIntResult = list.BinarySearch(
+            value,
+            Comparer<T>.Default);
+
+        return GetBinarySearchResultFromIdxResult(
+            binarySearchIntResult,
+            list.Count);
+    }
+
     public static BinarySearchResult GetBinarySearchResultFromIdxResult(
         int binarySearchResult,
         int collectionSize)
@@ -169,4 +182,20 @@ public enum FilterType
     AllAboveOrEqual,
     AllUnder,
     AllUnderOrEqual
+}
+
+public class SingleValueCollectionComparer<TCollection, T> : IComparer<TCollection>
+    where T : IComparable<T>
+{
+    private readonly T _val;
+    private readonly Func<TCollection?, T> _collectionValueExtractor;
+
+    public SingleValueCollectionComparer(T val, Func<TCollection?, T> collectionValueExtractor)
+    {
+        _val = val;
+        _collectionValueExtractor = collectionValueExtractor;
+    }
+
+    public int Compare(TCollection? x, TCollection? y)
+        => _collectionValueExtractor(x).CompareTo(_val);
 }
