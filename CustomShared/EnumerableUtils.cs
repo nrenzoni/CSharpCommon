@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Threading;
 
 namespace CustomShared;
 
@@ -146,7 +148,8 @@ public static class EnumerableUtils
     }
 
     // https://stackoverflow.com/a/1581482/3262950
-    public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> source)
+    public static IEnumerable<(T, T)> Pairwise<T>(
+        this IEnumerable<T> source)
     {
         var previous = default(T);
 
@@ -160,7 +163,8 @@ public static class EnumerableUtils
     }
 
     // https://stackoverflow.com/a/4831908/3262950
-    public static IEnumerable<decimal> CumulativeSum(this IEnumerable<decimal> sequence)
+    public static IEnumerable<decimal> CumulativeSum(
+        this IEnumerable<decimal> sequence)
     {
         decimal sum = 0;
         foreach (var item in sequence)
@@ -169,8 +173,10 @@ public static class EnumerableUtils
             yield return sum;
         }
     }
-    
-    public static bool IsOrdered<T>(this IList<T> list, IComparer<T> comparer = null)
+
+    public static bool IsOrdered<T>(
+        this IList<T> list,
+        IComparer<T> comparer = null)
     {
         if (comparer == null)
         {
@@ -181,12 +187,32 @@ public static class EnumerableUtils
         {
             for (int i = 1; i < list.Count; i++)
             {
-                if (comparer.Compare(list[i - 1], list[i]) > 0)
+                if (comparer.Compare(
+                        list[i - 1],
+                        list[i]) > 0)
                 {
                     return false;
                 }
             }
         }
+
         return true;
+    }
+
+    private static readonly RNGCryptoServiceProvider  Random = new();
+
+    public static void Shuffle<T>(
+        this IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            byte[] box = new byte[1];
+            do Random.GetBytes(box);
+            while (!(box[0] < n * (Byte.MaxValue / n)));
+            int k = (box[0] % n);
+            n--;
+            (list[k], list[n]) = (list[n], list[k]);
+        }
     }
 }

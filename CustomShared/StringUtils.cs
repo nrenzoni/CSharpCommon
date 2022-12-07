@@ -8,7 +8,7 @@ public static class StringUtils
     {
         return string.Concat(inStr.Select(
             (x, i) => i > 0 && char.IsUpper(x)
-                ? "_" + char.ToLower(x).ToString()
+                ? "_" + char.ToLower(x)
                 : char.ToLower(x).ToString()));
     }
 
@@ -20,6 +20,7 @@ public static class StringUtils
                 : x)).Replace("_", "");
     }
     
-    public static int BoolToInt(this bool inBool)
-        => inBool ? 1 : 0;
+    public static string SurroundWithSingleQuotes(
+        this string str)
+        => $"'{str}'";
 }

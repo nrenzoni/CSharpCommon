@@ -84,9 +84,9 @@ public class ConfigVariables : IConfigVariables
     public static ConfigVariables TestInstance => _testInstance;
 
     public string MarketDayClosedListDir { get; protected set; }
-    public string ProjectBaseDir { get; protected set; }
+    // public string ProjectBaseDir { get; protected set; }
     public string LogConfigFile { get; protected set; }
-    public string TestDataDirectory { get; protected set; }
+    // public string TestDataDirectory { get; protected set; }
 
     public string MongoConn { get; protected set; } = "mongodb://localhost:27017/?compressors=zstd";
     
@@ -148,11 +148,7 @@ public class ClickhouseConfigVariables : ConfigVariables
     public string ClickhouseHost { get; protected set; }
     public string ClickhouseUser { get; protected set; }
     public string ClickhousePassword { get; protected set; }
-    public string ClickhouseAlertsTable { get; protected set; } = "ti.alerts";
-    public string ClickhouseTopListTable { get; protected set; } = "ti.top_list";
-
-    public string ClickhouseSchemaDirectory { get; protected set; }
-
+    
     public uint NClickhouseConverters { get; protected set; } = 4;
 
     public uint ClickhouseSaverBatchSize { get; protected set; } = 10000;
@@ -160,11 +156,31 @@ public class ClickhouseConfigVariables : ConfigVariables
     protected new static T MakeTestConfigVariables<T>() where T : ClickhouseConfigVariables, new()
     {
         var configVariables = ConfigVariableUtils.LoadFromEnv<T>();
-        configVariables.ClickhouseAlertsTable = "ti_test.alerts";
-        configVariables.ClickhouseTopListTable = "ti_test.top_list";
+        // configVariables.ClickhouseAlertsTable = "ti_test.alerts";
+        // configVariables.ClickhouseTopListTable = "ti_test.top_list";
 
         return configVariables;
     }
+}
+
+public class ClickhouseTiRetrieverConfigVariables : ClickhouseConfigVariables
+{
+    private static readonly ClickhouseTiRetrieverConfigVariables _prodInstance
+        = ConfigVariableUtils.LoadFromEnv<ClickhouseTiRetrieverConfigVariables>();
+
+    private static readonly ClickhouseTiRetrieverConfigVariables _testInstance
+        = MakeTestConfigVariables<ClickhouseTiRetrieverConfigVariables>();
+
+    public new static ClickhouseTiRetrieverConfigVariables Instance => IsTestGlobalChecker.IsTest
+        ? _testInstance
+        : _prodInstance;
+
+    public new static ClickhouseTiRetrieverConfigVariables TestInstance => _testInstance;
+    
+    public string ClickhouseAlertsTable { get; protected set; } = "ti.alerts";
+    public string ClickhouseTopListTable { get; protected set; } = "ti.top_list";
+
+    public string ClickhouseSchemaDirectory { get; protected set; }
 }
 
 public static class IsTestGlobalChecker

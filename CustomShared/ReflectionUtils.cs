@@ -50,14 +50,60 @@ public static class ReflectionUtils
         return returnCollection;
     }
 
+    public static (IReadOnlyList<string> matchingValid, IReadOnlyList<string> notMatched) GetValidColumnNames(
+        this IReadOnlyList<string> columnsToVerify,
+        IReadOnlyList<string> validColumnNames)
+    {
+        var validColumnsHashSet = new HashSet<string>(validColumnNames);
+
+        HashSet<string> matchingValid = new();
+        HashSet<string> notMatched = new();
+
+        foreach (var s in columnsToVerify)
+        {
+            if (validColumnsHashSet.Contains(s))
+            {
+                matchingValid.Add(s);
+                continue;
+            }
+
+            var colNameWithLeadingC = $"c_{s}";
+
+            if (validColumnsHashSet.Contains(colNameWithLeadingC))
+            {
+                matchingValid.Add(colNameWithLeadingC);
+                continue;
+            }
+
+            var underscoreCase = s.CamelCaseToUnderscoreCase();
+
+            if (validColumnsHashSet.Contains(underscoreCase))
+            {
+                matchingValid.Add(underscoreCase);
+                continue;
+            }
+
+            notMatched.Add(s);
+        }
+
+        return (matchingValid.ToList(), notMatched.ToList());
+    }
+
     public static IReadOnlyList<string> GetColumnNames(
-        this Type type)
+        this Type type,
+        HashSet<string> skipFields = null,
+        bool ignoreNested = false)
     {
         var inst = Activator.CreateInstance(type);
 
         var returnColumnNames = new List<string>();
 
-        foreach (var rawColumn in inst.GetFields().Keys)
+        var fieldNames = inst.GetFields(
+                skipFields: skipFields,
+                ignoreNested: ignoreNested)
+            .Keys;
+
+        foreach (var rawColumn in fieldNames)
         {
             var column = rawColumn;
             if (column.StartsWith("c_"))
@@ -79,7 +125,9 @@ public static class ReflectionUtils
     /// obj can be either a class instance or a Type
     public static SortedDictionary<string, object> GetFields(
         this object obj,
-        bool useCustomDbColumnName = false)
+        bool useCustomDbColumnName = false,
+        HashSet<string> skipFields = null,
+        bool ignoreNested = false)
     {
         var type = obj is Type
             ? (Type)obj
@@ -91,6 +139,9 @@ public static class ReflectionUtils
 
         foreach (var propertyInfo in props)
         {
+            if (skipFields?.Contains(propertyInfo.Name) is true)
+                continue;
+
             if (Attribute.IsDefined(
                     propertyInfo,
                     typeof(CustomAttributes.IgnoreField)))
@@ -100,6 +151,9 @@ public static class ReflectionUtils
                     propertyInfo,
                     typeof(CustomAttributes.Flatten)))
             {
+                if (ignoreNested)
+                    continue;
+
                 // check if inner value is null
                 var valToRecurse =
                     obj is Type
