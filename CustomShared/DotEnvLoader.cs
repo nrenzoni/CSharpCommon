@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CustomShared;
 
@@ -11,22 +7,19 @@ public static class DotEnvLoader
 {
     public static bool Load(string envFileName = ".env")
     {
-        string filePath = Path.GetFullPath(envFileName);
-        for (int i = 0; i < 5; i++)
+        string filePath;
+
+        try
         {
-            if (File.Exists(filePath))
-                break;
-
-            string parent = Directory.GetParent(filePath).Parent.ToString();
-            filePath = Path.Combine(parent, envFileName);
+            filePath = PathUtils.FindPath(envFileName);
         }
-
-        if (!File.Exists(filePath))
+        catch
         {
             Console.WriteLine(
                 $"Could not find any matching {envFileName} files starting in path {Directory.GetParent(envFileName)}!");
             return false;
         }
+
 
         Console.WriteLine($"Loading Env file from {Path.GetFullPath(filePath)}.");
 
