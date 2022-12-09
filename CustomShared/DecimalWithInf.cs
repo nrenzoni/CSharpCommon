@@ -44,23 +44,17 @@ public class DecimalWithInf
     }
 
     public DecimalWithInf(
-        decimal? value = null,
         bool positiveInfinity = false,
         bool negativeInfinity = false)
     {
-        if (value is null
-            && !positiveInfinity
+        if (!positiveInfinity
             && !negativeInfinity)
             throw new Exception("Must have value or one infinity");
-
-        if (value is not null
-            && (positiveInfinity || negativeInfinity))
-            throw new Exception("Cannot have value set and an infinity set.");
-
+        
         if (positiveInfinity && negativeInfinity)
             throw new Exception("At most one infinity can be set");
 
-        Value = value;
+        Value = null;
         PositiveInfinity = positiveInfinity;
         NegativeInfinity = negativeInfinity;
     }

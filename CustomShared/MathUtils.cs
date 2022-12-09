@@ -15,7 +15,7 @@ public static class MathUtils
     {
         return Convert.ToUInt64(Math.Truncate(value));
     }
-    
+
     public static UInt64 FractionalPart(
         this decimal value)
     {
@@ -40,4 +40,12 @@ public static class MathUtils
         => inBool
             ? 1
             : 0;
+
+    public static decimal DecimalFromParts(ulong integer, ulong fractional)
+    {
+        return new decimal(integer + fractional / Math.Pow(10, fractional.NumberOfDigits()));
+    }
+
+    public static uint NumberOfDigits(this ulong n)
+        => (uint)Math.Floor(Math.Log10(n) + 1);
 }
