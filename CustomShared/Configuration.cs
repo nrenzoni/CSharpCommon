@@ -84,12 +84,13 @@ public class ConfigVariables : IConfigVariables
     public static ConfigVariables TestInstance => _testInstance;
 
     public string MarketDayClosedListDir { get; protected set; }
+
     // public string ProjectBaseDir { get; protected set; }
     public string LogConfigFile { get; protected set; }
     // public string TestDataDirectory { get; protected set; }
 
     public string MongoConn { get; protected set; } = "mongodb://localhost:27017/?compressors=zstd";
-    
+
     protected static T MakeTestConfigVariables<T>() where T : ConfigVariables, new()
     {
         var configVariables = ConfigVariableUtils.LoadFromEnv<T>();
@@ -148,7 +149,7 @@ public class ClickhouseConfigVariables : ConfigVariables
     public string ClickhouseHost { get; protected set; }
     public string ClickhouseUser { get; protected set; }
     public string ClickhousePassword { get; protected set; }
-    
+
     public uint NClickhouseConverters { get; protected set; } = 4;
 
     public uint ClickhouseSaverBatchSize { get; protected set; } = 10000;
@@ -176,11 +177,9 @@ public class ClickhouseTiRetrieverConfigVariables : ClickhouseConfigVariables
         : _prodInstance;
 
     public new static ClickhouseTiRetrieverConfigVariables TestInstance => _testInstance;
-    
+
     public string ClickhouseAlertsTable { get; protected set; } = "ti.alerts";
     public string ClickhouseTopListTable { get; protected set; } = "ti.top_list";
-
-    public string ClickhouseSchemaDirectory { get; protected set; }
 }
 
 public static class IsTestGlobalChecker

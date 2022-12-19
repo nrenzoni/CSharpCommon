@@ -122,4 +122,13 @@ public class DecimalWithInf
             ? lhs
             : rhs;
     }
+
+    public override string ToString()
+    {
+        return Value.HasValue
+            ? Value.ToString()
+            : (NegativeInfinity
+                ? "-inf"
+                : "+inf");
+    }
 }

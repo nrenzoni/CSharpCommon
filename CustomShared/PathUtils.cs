@@ -20,7 +20,7 @@ public class PathUtils
         if (!File.Exists(filePath))
         {
             throw new Exception(
-                $"Could not find any matching {filename} files starting in path {Directory.GetParent(filename)}!");
+                $"Could not find any matching {filename} files starting in path {Directory.GetParent(filename)}.");
         }
 
         return filePath;

@@ -33,14 +33,19 @@ public class MarketDayChecker
         LocalDate date,
         int offset = 1)
     {
-        return GetNextOpenDay(date, offset);
+        return GetNextOpenDay(
+            date,
+            offset);
     }
 
     public LocalDate GetNextNonWeekendDay(
         LocalDate date,
         int offset = 1)
     {
-        return GetNextOpenDay(date, offset, true);
+        return GetNextOpenDay(
+            date,
+            offset,
+            true);
     }
 
     public LocalDate GetNextOpenDay(
@@ -148,6 +153,13 @@ public class YearNonWeekendClosedDayChecker : IYearNonWeekendClosedDayChecker
         _marketDayClosedListDir = marketDayClosedListDir;
     }
 
+    public YearNonWeekendClosedDayChecker(
+        MarketDayCheckerConfiguration marketDayCheckerConfiguration)
+    {
+        _marketDayClosedListDir
+            = marketDayCheckerConfiguration.MarketDayClosedListDir;
+    }
+
     public bool IsNonWeekendClosedAllDay(
         LocalDate date)
     {
@@ -156,8 +168,12 @@ public class YearNonWeekendClosedDayChecker : IYearNonWeekendClosedDayChecker
         // lazy load all closed day data for year
         if (!Instances.ContainsKey(dateYear))
         {
-            var marketClosedDays = new YearNonWeekendClosedDays(dateYear, _marketDayClosedListDir);
-            Instances.Add(dateYear, marketClosedDays);
+            var marketClosedDays = new YearNonWeekendClosedDays(
+                dateYear,
+                _marketDayClosedListDir);
+            Instances.Add(
+                dateYear,
+                marketClosedDays);
         }
 
         var nonWeekendClosedDaysForYear = Instances[dateYear];
@@ -182,7 +198,10 @@ public class YearNonWeekendClosedDays
         Year = year;
         _marketDayClosedListDir = marketDayClosedListDir;
 
-        _closedDays = LoadFromFile(year).ToDictionary(x => x.Date, x => x);
+        _closedDays = LoadFromFile(year)
+            .ToDictionary(
+                x => x.Date,
+                x => x);
     }
 
     public bool Contains(
@@ -193,7 +212,6 @@ public class YearNonWeekendClosedDays
 
     public uint Year { get; }
 
-
     public List<MarketClosedDay> LoadFromFile(
         uint year)
     {
@@ -201,7 +219,9 @@ public class YearNonWeekendClosedDays
         if (!Directory.Exists(marketDayDir))
             throw new DirectoryNotFoundException($"Directory doesn't exist: [{marketDayDir}].");
 
-        var files = Directory.GetFiles(marketDayDir, $"*{year.ToString()}*");
+        var files = Directory.GetFiles(
+            marketDayDir,
+            $"*{year.ToString()}*");
 
         if (files.Length == 0)
             throw new Exception($"No market closed file for year: [{year}]");
@@ -235,7 +255,9 @@ public class YearNonWeekendClosedDays
                 closingTime = ClosesEarlyTime.ParseToLocalTime();
             }
 
-            return new MarketClosedDay(localDate, closingTime);
+            return new MarketClosedDay(
+                localDate,
+                closingTime);
         }
     }
 
@@ -243,7 +265,9 @@ public class YearNonWeekendClosedDays
         string filename)
     {
         using var reader = new StreamReader(filename);
-        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+        using var csv = new CsvReader(
+            reader,
+            CultureInfo.InvariantCulture);
         var records = csv.GetRecords<RawCsvClosedTradingDate>();
 
         return records.Select(x => x.ToMarketClosedDay()).ToList();

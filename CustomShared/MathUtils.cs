@@ -16,11 +16,18 @@ public static class MathUtils
         return Convert.ToUInt64(Math.Truncate(value));
     }
 
-    public static UInt64 FractionalPart(
+    public static (UInt64, UInt32 shiftCount) FractionalPart(
         this decimal value)
     {
         var fractionalPart = Math.Abs(value - Decimal.Truncate(value));
-        return Convert.ToUInt64(fractionalPart);
+
+        var shiftCount = 19u;
+        var shiftMult = Convert.ToDecimal(
+            Math.Pow(
+                10,
+                19));
+        var fractionAsInt = fractionalPart * shiftMult;
+        return (Convert.ToUInt64(fractionAsInt), shiftCount);
     }
 
     public static String FmtOnlyFractional(
@@ -41,11 +48,17 @@ public static class MathUtils
             ? 1
             : 0;
 
-    public static decimal DecimalFromParts(ulong integer, ulong fractional)
+    public static decimal DecimalFromParts(
+        ulong integer,
+        ulong fractional)
     {
-        return new decimal(integer + fractional / Math.Pow(10, fractional.NumberOfDigits()));
+        return new decimal(
+            integer + fractional / Math.Pow(
+                10,
+                fractional.NumberOfDigits()));
     }
 
-    public static uint NumberOfDigits(this ulong n)
+    public static uint NumberOfDigits(
+        this ulong n)
         => (uint)Math.Floor(Math.Log10(n) + 1);
 }
