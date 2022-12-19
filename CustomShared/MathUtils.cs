@@ -19,15 +19,38 @@ public static class MathUtils
     public static (UInt64, UInt32 shiftCount) FractionalPart(
         this decimal value)
     {
-        var fractionalPart = Math.Abs(value - Decimal.Truncate(value));
+        if (value == 0M)
+            return (0, 0);
 
-        var shiftCount = 19u;
-        var shiftMult = Convert.ToDecimal(
-            Math.Pow(
-                10,
-                19));
-        var fractionAsInt = fractionalPart * shiftMult;
-        return (Convert.ToUInt64(fractionAsInt), shiftCount);
+        var fractionalPart = Math.Abs(value - Decimal.Truncate(value));
+        var shiftedRight = fractionalPart * 10e19M;
+        var shiftedDigitCountWithTrailingZeros =
+            (uint)Math.Log10(Convert.ToDouble(shiftedRight)) + 1;
+        
+        uint significantTrailingZeros = 0;
+        while (true)
+        {
+            if (shiftedRight % 1e5M != 0)
+            {
+                shiftedRight /= 1e5M;
+                significantTrailingZeros += 5;
+                continue;
+            }
+
+            if (shiftedRight % 10 != 0)
+            {
+                shiftedRight /= 10M;
+                significantTrailingZeros += 1;
+                continue;
+            }
+
+            break;
+        }
+
+        var shiftCount =
+            shiftedDigitCountWithTrailingZeros - significantTrailingZeros;
+
+        return (Convert.ToUInt64(fractionalPart), shiftCount);
     }
 
     public static String FmtOnlyFractional(
