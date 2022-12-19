@@ -49,13 +49,16 @@ public static class MathUtils
             : 0;
 
     public static decimal DecimalFromParts(
-        ulong integer,
-        ulong fractional)
+        ulong wholePart,
+        ulong fractional,
+        uint? shiftRightCount)
     {
+        var shiftCount = shiftRightCount ?? fractional.NumberOfDigits();
+
         return new decimal(
-            integer + fractional / Math.Pow(
+            wholePart + fractional / Math.Pow(
                 10,
-                fractional.NumberOfDigits()));
+                shiftCount));
     }
 
     public static uint NumberOfDigits(
