@@ -16,28 +16,32 @@ public static class MathUtils
         return Convert.ToUInt64(Math.Truncate(value));
     }
 
-    public static (UInt64, UInt32 shiftCount) FractionalPart(
+    public static (UInt64 fractionalPart, UInt32 shiftCount) FractionalPart(
         this decimal value)
     {
         if (value == 0M)
             return (0, 0);
 
         var fractionalPart = Math.Abs(value - Decimal.Truncate(value));
+
+        if (fractionalPart == 0M)
+            return (0, 0);
+
         var shiftedRight = fractionalPart * 10e19M;
         var shiftedDigitCountWithTrailingZeros =
             (uint)Math.Log10(Convert.ToDouble(shiftedRight)) + 1;
-        
+
         uint significantTrailingZeros = 0;
         while (true)
         {
-            if (shiftedRight % 1e5M != 0)
+            if (shiftedRight % 1e5M == 0)
             {
                 shiftedRight /= 1e5M;
                 significantTrailingZeros += 5;
                 continue;
             }
 
-            if (shiftedRight % 10 != 0)
+            if (shiftedRight % 10 == 0)
             {
                 shiftedRight /= 10M;
                 significantTrailingZeros += 1;
@@ -48,9 +52,9 @@ public static class MathUtils
         }
 
         var shiftCount =
-            shiftedDigitCountWithTrailingZeros - significantTrailingZeros;
+            19u - significantTrailingZeros + 1;
 
-        return (Convert.ToUInt64(fractionalPart), shiftCount);
+        return (Convert.ToUInt64(shiftedRight), shiftCount);
     }
 
     public static String FmtOnlyFractional(
