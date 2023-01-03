@@ -91,4 +91,42 @@ public static class MathUtils
     public static uint NumberOfDigits(
         this ulong n)
         => (uint)Math.Floor(Math.Log10(n) + 1);
+
+    public static decimal TruncateDecimalPlaces(
+        this decimal d,
+        byte decimalPlacesToKeep)
+    {
+        decimal r = Math.Round(
+            d,
+            decimalPlacesToKeep);
+
+        return d switch
+        {
+            > 0 when r > d => r - new decimal(
+                1,
+                0,
+                0,
+                false,
+                decimalPlacesToKeep),
+            < 0 when r < d => r + new decimal(
+                1,
+                0,
+                0,
+                false,
+                decimalPlacesToKeep),
+            _ => r
+        };
+    }
+
+    public static DecimalWithInf TruncateDecimalPlaces(
+        this DecimalWithInf d,
+        byte decimalPlacesToKeep)
+    {
+        if (d.Value.HasValue)
+            return new DecimalWithInf(
+                d.Value.Value.TruncateDecimalPlaces(
+                    decimalPlacesToKeep));
+
+        return d;
+    }
 }

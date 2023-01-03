@@ -24,4 +24,9 @@ public class MicrosoftConfigurationLoader
         return configurationBuilder
             .Build();
     }
+
+    public static string FindAppSettingsFile()
+    {
+        return PathUtils.FindPath("appsettings.json");
+    }
 }
