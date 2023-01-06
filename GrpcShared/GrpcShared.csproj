@@ -19,4 +19,8 @@
         <Protobuf Include="..\..\Protos\Common\*.proto" Link="Protos/Common/*" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\CustomShared\CustomShared.csproj" />
+    </ItemGroup>
+
 </Project>
