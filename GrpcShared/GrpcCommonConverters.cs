@@ -86,4 +86,14 @@ public static class GrpcCommonConverters
 
     public static (string, decimal) Convert(KeyValueDecimal inKeyValueDecimal)
         => (inKeyValueDecimal.Key, Convert(inKeyValueDecimal.Value));
+
+    public static KeyValueDecimal Convert(
+        KeyValuePair<string, decimal> inKeyValueDecimal)
+    {
+        return new KeyValueDecimal
+        {
+            Key = inKeyValueDecimal.Key,
+            Value = Convert(inKeyValueDecimal.Value)
+        };
+    }
 }
