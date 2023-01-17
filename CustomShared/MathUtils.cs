@@ -10,30 +10,40 @@ public static class MathUtils
         decimal[] vals)
         => vals.Max();
 
-    public static UInt64 WholePart(
+    public static Int64 WholePart(
         this decimal value)
     {
-        return Convert.ToUInt64(Math.Truncate(value));
+        return Convert.ToInt64(Math.Truncate(value));
     }
 
+    // max fractionalPart of 19 places
     public static (UInt64 fractionalPart, UInt32 shiftCount) FractionalPart(
         this decimal value)
     {
         if (value == 0M)
             return (0, 0);
 
-        var fractionalPart = Math.Abs(value - Decimal.Truncate(value));
+        var fractionalPart = Math.Abs(
+            Math.Round(
+                value,
+                19)
+            - Decimal.Truncate(value));
 
         if (fractionalPart == 0M)
             return (0, 0);
 
         var shiftedRight = fractionalPart * 10e19M;
-        var shiftedDigitCountWithTrailingZeros =
-            (uint)Math.Log10(Convert.ToDouble(shiftedRight)) + 1;
 
         uint significantTrailingZeros = 0;
         while (true)
         {
+            if (shiftedRight % 1e10M == 0)
+            {
+                shiftedRight /= 1e10M;
+                significantTrailingZeros += 10;
+                continue;
+            }
+            
             if (shiftedRight % 1e5M == 0)
             {
                 shiftedRight /= 1e5M;
@@ -76,7 +86,7 @@ public static class MathUtils
             : 0;
 
     public static decimal DecimalFromParts(
-        ulong wholePart,
+        long wholePart,
         ulong fractional,
         uint? shiftRightCount)
     {
