@@ -11,7 +11,7 @@ public static class GrpcCommonConverters
         decimal inDecimal)
     {
         var decimalRet = new CommonProto.Decimal();
-        decimalRet.Whole = inDecimal.WholePart();
+        decimalRet.Whole = inDecimal.WholePositiveOnly();
         var (decimalRetFraction, shiftCount) = inDecimal.FractionalPart();
         decimalRet.Fraction = decimalRetFraction;
         decimalRet.FractionShiftLeft = shiftCount;
@@ -24,7 +24,8 @@ public static class GrpcCommonConverters
         return MathUtils.DecimalFromParts(
             inDecimal.Whole,
             inDecimal.Fraction,
-            inDecimal.FractionShiftLeft);
+            inDecimal.FractionShiftLeft,
+            inDecimal.IsNegative);
     }
 
     public static CommonProto.DecimalWithInf Convert(

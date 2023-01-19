@@ -16,6 +16,12 @@ public static class MathUtils
         return Convert.ToInt64(Math.Truncate(value));
     }
 
+    public static UInt64 WholePositiveOnly(
+        this decimal value)
+    {
+        return Convert.ToUInt64(Math.Truncate(value));
+    }
+
     // max fractionalPart of 19 places
     public static (UInt64 fractionalPart, UInt32 shiftCount) FractionalPart(
         this decimal value)
@@ -43,7 +49,7 @@ public static class MathUtils
                 significantTrailingZeros += 10;
                 continue;
             }
-            
+
             if (shiftedRight % 1e5M == 0)
             {
                 shiftedRight /= 1e5M;
@@ -92,10 +98,32 @@ public static class MathUtils
     {
         var shiftCount = shiftRightCount ?? fractional.NumberOfDigits();
 
+        var frac = fractional / Math.Pow(
+            10,
+            shiftCount);
+
         return new decimal(
-            wholePart + fractional / Math.Pow(
-                10,
-                shiftCount));
+            wholePart + frac);
+    }
+
+    public static decimal DecimalFromParts(
+        UInt64 wholePart,
+        ulong fractional,
+        uint? shiftRightCount,
+        bool isNegative)
+    {
+        var shiftCount = shiftRightCount ?? fractional.NumberOfDigits();
+
+        var frac = fractional / Math.Pow(
+            10,
+            shiftCount);
+
+        var posDec = new decimal(
+            wholePart + frac);
+
+        if (isNegative)
+            return -1 * posDec;
+        return posDec;
     }
 
     public static uint NumberOfDigits(
