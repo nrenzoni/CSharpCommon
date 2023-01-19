@@ -19,7 +19,7 @@ public static class MathUtils
     public static UInt64 WholePositiveOnly(
         this decimal value)
     {
-        return Convert.ToUInt64(Math.Truncate(value));
+        return Convert.ToUInt64(Math.Abs(Math.Truncate(value)));
     }
 
     // max fractionalPart of 19 places
