@@ -15,6 +15,7 @@ public static class GrpcCommonConverters
         var (decimalRetFraction, shiftCount) = inDecimal.FractionalPart();
         decimalRet.Fraction = decimalRetFraction;
         decimalRet.FractionShiftLeft = shiftCount;
+        decimalRet.IsNegative = inDecimal < 0;
         return decimalRet;
     }
 
@@ -85,7 +86,8 @@ public static class GrpcCommonConverters
         };
     }
 
-    public static (string, decimal) Convert(KeyValueDecimal inKeyValueDecimal)
+    public static (string, decimal) Convert(
+        KeyValueDecimal inKeyValueDecimal)
         => (inKeyValueDecimal.Key, Convert(inKeyValueDecimal.Value));
 
     public static KeyValueDecimal Convert(
