@@ -14,6 +14,19 @@ public static class ReflectionUtils
 {
     private static readonly ILog Log = LogManager.GetLogger(typeof(ReflectionUtils));
 
+    public static IEnumerable<string> GetPropertyNamesNonRecursive(
+        Type type)
+    {
+        var props =
+            type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .OrderBy(p => p.Name);
+
+        foreach (var propertyInfo in props)
+        {
+            yield return propertyInfo.Name;
+        }
+    }
+
     // only used in tests
     public static IEnumerable<PropertyInfo> GetPropertyInfoEnumerable(
         Type type,

@@ -7,6 +7,17 @@ namespace CustomShared;
 
 public class MicrosoftConfigurationLoader
 {
+    public static T GetConfiguration<T>(
+        IConfiguration configuration,
+        string sectionName)
+        where T : class, new()
+    {
+        var config = new T();
+        configuration.GetSection(sectionName).Bind(config);
+        return config;
+    }
+
+    
     public static IConfiguration LoadMicrosoftConfiguration(
         params string[] appSettingsFiles)
     {

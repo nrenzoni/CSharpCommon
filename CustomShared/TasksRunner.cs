@@ -68,17 +68,20 @@ public class TasksRunner
         IEnumerable<Task> tasksToRun,
         uint? maxTasksToRunInParallel = null,
         int timeoutInMilliseconds = -1,
-        CancellationToken cancellationToken = new())
+        CancellationToken cancellationToken = new(),
+        bool rethrowExceptions = true)
     {
         // Convert to a list of tasks so that we don't enumerate over it multiple times needlessly.
         var tasks = tasksToRun.ToList();
 
         using var limiter = new SemaphoreSlim((int)(maxTasksToRunInParallel ?? 100));
-        
+
         var postTaskTasks = new List<Task>();
 
         // Have each task notify the throttler when it completes so that it decrements the number of tasks currently running.
-        tasks.ForEach(t => postTaskTasks.Add(t.ContinueWith(tsk => limiter.Release())));
+        tasks.ForEach(
+            t => postTaskTasks.Add(
+                t.ContinueWith(_ => limiter.Release())));
 
         // Start running each task.
         foreach (var task in tasks)
@@ -93,9 +96,8 @@ public class TasksRunner
         }
 
         // Wait for all of the provided tasks to complete.
-        // We wait on the list of "post" tasks instead of the original tasks, otherwise there is a potential race condition where the throttler&#39;s using block is exited before some Tasks have had their "post" action completed, which references the throttler, resulting in an exception due to accessing a disposed object.
-        Task.WaitAll(
-            postTaskTasks.ToArray(),
-            cancellationToken);
+        // We wait on the list of "post" tasks instead of the original tasks, otherwise there is a potential race condition where the throttler's using block is exited before some Tasks have had their "post" action completed, which references the throttler, resulting in an exception due to accessing a disposed object.
+        WaitForAllTasksToComplete(
+            postTaskTasks);
     }
 }

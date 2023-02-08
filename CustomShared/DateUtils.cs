@@ -203,6 +203,53 @@ public static class DateUtils
         target,
         round.Ticks);
 
+    public static Instant RoundInstantToBoundary(
+        Instant time,
+        Duration roundDown)
+    {
+        if (roundDown < Duration.Zero
+            || roundDown > Duration.FromDays(1))
+        {
+            throw new Exception(
+                $"{nameof(roundDown)} must be greater than zero and <= 1 day, "
+                + $"got value {roundDown}.");
+        }
+
+        var dateTimeUtc = time.ToDateTimeUtc();
+        var dateUtc = LocalDate.FromDateTime(dateTimeUtc);
+
+        int hour = dateTimeUtc.Hour,
+            minute = dateTimeUtc.Minute,
+            second = dateTimeUtc.Second,
+            millisecond = dateTimeUtc.Millisecond;
+
+        if (roundDown.Hours != 0)
+            hour -= hour % roundDown.Hours;
+
+        if (roundDown.Minutes != 0)
+            minute -= minute % roundDown.Minutes;
+        else if (roundDown >= Duration.FromHours(1))
+            minute = 0;
+
+        if (roundDown.Seconds != 0)
+            second -= second % roundDown.Seconds;
+        else if (roundDown >= Duration.FromMinutes(1))
+            second = 0;
+
+        if (roundDown.Milliseconds != 0)
+            millisecond -= millisecond % roundDown.Milliseconds;
+        else if (roundDown >= Duration.FromSeconds(1))
+            millisecond = 0;
+
+        var timeFloored = new LocalTime(
+            hour,
+            minute,
+            second,
+            millisecond);
+
+        return (dateUtc + timeFloored).InZoneStrictly(DateTimeZone.Utc).ToInstant();
+    }
+
     public static List<LocalTime> GetTimesInInterval(
         LocalTime firstTime,
         LocalTime lastTime,
@@ -304,4 +351,10 @@ public static class DateUtils
                 pattern,
                 null);
     }
+
+    public static Instant AtStartOfNyDay(
+        this LocalDate date)
+        => date
+            .AtStartOfDayInZone(DateUtils.NyDateTz)
+            .ToInstant();
 }

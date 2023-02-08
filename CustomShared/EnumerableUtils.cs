@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
+using CsvHelper;
 
 namespace CustomShared;
 
@@ -214,5 +215,49 @@ public static class EnumerableUtils
             n--;
             (list[k], list[n]) = (list[n], list[k]);
         }
+    }
+    
+    public static IEnumerable<T> Unroll<T>(
+        this IEnumerable<IEnumerable<T>> enumerableOfEnumerables)
+        => enumerableOfEnumerables.SelectMany(enumerable => enumerable);
+
+    public static void AssertListType<T>(
+        this object list)
+    {
+        var type = list.GetType();
+        if (type.IsGenericType
+            && type.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            var listType = type.GetGenericArguments()[0];
+
+            if (listType is not T)
+            {
+                throw new Exception($"Item of type {listType} is not a list of type {typeof(T)}.");
+            }
+        }
+        else throw new Exception("Item is not a list.");
+    }
+
+    public static Dictionary<string, T> ReadDictionaryKeyTypeOnly<T>(
+        this Dictionary<string, object> inDictionary)
+    {
+        var outDictionary = new Dictionary<string, T>();
+
+        foreach (var (key, value) in inDictionary)
+        {
+            try
+            {
+                var converted = (T)Convert.ChangeType(
+                    value,
+                    typeof(T));
+                outDictionary[key] = converted;
+            }
+            catch (Exception e)
+            {
+                
+            }
+        }
+
+        return outDictionary;
     }
 }
