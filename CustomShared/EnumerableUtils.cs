@@ -200,7 +200,7 @@ public static class EnumerableUtils
         return true;
     }
 
-    private static readonly RNGCryptoServiceProvider  Random = new();
+    private static readonly RNGCryptoServiceProvider Random = new();
 
     public static void Shuffle<T>(
         this IList<T> list)
@@ -216,7 +216,7 @@ public static class EnumerableUtils
             (list[k], list[n]) = (list[n], list[k]);
         }
     }
-    
+
     public static IEnumerable<T> Unroll<T>(
         this IEnumerable<IEnumerable<T>> enumerableOfEnumerables)
         => enumerableOfEnumerables.SelectMany(enumerable => enumerable);
@@ -254,10 +254,17 @@ public static class EnumerableUtils
             }
             catch (Exception e)
             {
-                
             }
         }
 
         return outDictionary;
+    }
+
+    public static IEnumerable<(T item, int index)> WithIndex<T>(
+        this IEnumerable<T> source)
+    {
+        return source.Select((
+            item,
+            index) => (item, index));
     }
 }

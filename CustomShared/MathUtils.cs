@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
@@ -166,5 +167,42 @@ public static class MathUtils
                     decimalPlacesToKeep));
 
         return d;
+    }
+
+    public static IEnumerable<decimal> UnrollRange(
+        decimal begin,
+        decimal end,
+        decimal step,
+        bool beginInclusive,
+        bool endInclusive)
+    {
+        var curr = begin;
+
+        if (!beginInclusive)
+            curr += step;
+
+        if (endInclusive)
+        {
+            while (true)
+            {
+                if (curr > end)
+                    yield break;
+
+                yield return curr;
+
+                curr += step;
+            }
+        }
+
+        // !endInclusive
+        while (true)
+        {
+            if (curr >= end)
+                yield break;
+
+            yield return curr;
+
+            curr += step;
+        }
     }
 }

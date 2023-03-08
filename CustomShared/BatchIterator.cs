@@ -39,12 +39,4 @@ public static class Iterators
         if (nextList.Count > 0)
             yield return nextList;
     }
-
-    public static IEnumerable<(T item, int index)> WithIndex<T>(
-        this IEnumerable<T> source)
-    {
-        return source.Select((
-            item,
-            index) => (item, index));
-    }
 }
