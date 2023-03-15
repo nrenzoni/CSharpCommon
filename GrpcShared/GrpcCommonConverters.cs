@@ -168,4 +168,22 @@ public static class GrpcCommonConverters
     {
         return new NestedObjectDictionary();
     }
+
+    public static DecimalIndexedValuePoint Convert(
+        (decimal index, decimal value) inIndexValue)
+    {
+        return new DecimalIndexedValuePoint
+        {
+            Index = Convert(inIndexValue.index),
+            Value = Convert(inIndexValue.value)
+        };
+    }
+
+    public static (decimal index, decimal value) Convert(
+        DecimalIndexedValuePoint inDecimalIndexedValuePoint)
+    {
+        return (
+            Convert(inDecimalIndexedValuePoint.Index),
+            Convert(inDecimalIndexedValuePoint.Value));
+    }
 }
