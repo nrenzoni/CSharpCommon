@@ -6,6 +6,8 @@ public class DecimalWithInf
 {
     public decimal? Value { get; }
 
+    public bool NonInfinity => !PositiveInfinity && !NegativeInfinity;
+
     public bool PositiveInfinity { get; }
 
     public bool NegativeInfinity { get; }
@@ -50,7 +52,7 @@ public class DecimalWithInf
         if (!positiveInfinity
             && !negativeInfinity)
             throw new Exception("Must have value or one infinity");
-        
+
         if (positiveInfinity && negativeInfinity)
             throw new Exception("At most one infinity can be set");
 
@@ -123,12 +125,31 @@ public class DecimalWithInf
             : rhs;
     }
 
-    public override string ToString()
+    public string ToString(
+        uint? rounding)
     {
-        return Value.HasValue
-            ? Value.ToString()
-            : (NegativeInfinity
+        object val = Value.HasValue
+            ? Value
+            : NegativeInfinity
                 ? "-inf"
-                : "+inf");
+                : "+inf";
+
+        if (val is decimal valDec)
+        {
+            if (rounding.HasValue)
+            {
+                val = Math.Round(
+                        valDec,
+                        (int)rounding.Value)
+                    .ToString();
+            }
+            else
+                val = valDec.ToString();
+        }
+
+        return val.ToString();
     }
+
+    public override string ToString()
+        => ToString(null);
 }

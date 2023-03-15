@@ -13,14 +13,17 @@ public class ExceptionFuncs
     {
         var remainingTries = retryCount + 1;
 
+        Exception e = null;
+
         while (remainingTries is null or > 0)
         {
             try
             {
                 return await requestFunc();
             }
-            catch (Exception _)
+            catch (Exception caught)
             {
+                e = caught;
                 // ignored
             }
 
@@ -29,7 +32,9 @@ public class ExceptionFuncs
             remainingTries--;
         }
 
-        throw new Exception($"Max retries made for {requestFuncName}.");
+        throw new Exception(
+            $"Max retries made for {requestFuncName}.",
+            e);
     }
 
     public static T RunWithRetries<T>(
@@ -40,14 +45,17 @@ public class ExceptionFuncs
     {
         var remainingTries = retryCount + 1;
 
+        Exception e = null;
+
         while (remainingTries is null or > 0)
         {
             try
             {
                 return requestFunc();
             }
-            catch (Exception _)
+            catch (Exception caught)
             {
+                e = caught;
                 // ignored
             }
 
@@ -56,6 +64,8 @@ public class ExceptionFuncs
             remainingTries--;
         }
 
-        throw new Exception($"Max retries made for {requestFuncName}.");
+        throw new Exception(
+            $"Max retries made for {requestFuncName}.",
+            e);
     }
 }

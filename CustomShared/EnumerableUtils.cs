@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
-using CsvHelper;
 
 namespace CustomShared;
 
@@ -150,17 +148,34 @@ public static class EnumerableUtils
 
     // https://stackoverflow.com/a/1581482/3262950
     public static IEnumerable<(T, T)> Pairwise<T>(
-        this IEnumerable<T> source)
+        this IEnumerable<T> source,
+        uint pairOffset = 1)
     {
-        var previous = default(T);
-
         using var it = source.GetEnumerator();
 
+        var nextFirstElems = new Queue<T>((int)pairOffset);
+
+        // start iterator, enqueue first element
         if (it.MoveNext())
-            previous = it.Current;
+            nextFirstElems.Enqueue(it.Current);
+
+        while (pairOffset > 1)
+        {
+            if (!it.MoveNext())
+                break;
+            nextFirstElems.Enqueue(it.Current);
+            pairOffset--;
+        }
 
         while (it.MoveNext())
-            yield return (previous, previous = it.Current);
+        {
+            var first = nextFirstElems.Dequeue();
+            var second = it.Current;
+
+            yield return (first, second);
+
+            nextFirstElems.Enqueue(second);
+        }
     }
 
     // https://stackoverflow.com/a/4831908/3262950
@@ -202,19 +217,30 @@ public static class EnumerableUtils
 
     private static readonly RNGCryptoServiceProvider Random = new();
 
-    public static void Shuffle<T>(
+    public static void ShuffleFisherYates<T>(
         this IList<T> list)
     {
-        int n = list.Count;
-        while (n > 1)
+        var rnd = ThreadSafeRandom.ThisThreadsRandom;
+
+        for (var i = list.Count - 1; i > 1; i--)
         {
-            byte[] box = new byte[1];
-            do Random.GetBytes(box);
-            while (!(box[0] < n * (Byte.MaxValue / n)));
-            int k = (box[0] % n);
-            n--;
-            (list[k], list[n]) = (list[n], list[k]);
+            var j = rnd.Next(
+                0,
+                i + 1);
+
+            list.Swap(
+                i,
+                j);
         }
+    }
+
+    public static void Swap<T>(
+        this IList<T> list,
+        int i,
+        int j)
+    {
+        (list[i], list[j]) =
+            (list[j], list[i]);
     }
 
     public static IEnumerable<T> Unroll<T>(
@@ -260,11 +286,111 @@ public static class EnumerableUtils
         return outDictionary;
     }
 
+    public static (List<T1> first, List<T2> second)
+        Unzip<T, T1, T2>(
+            this IList<T> source,
+            Func<T, T1> firstSelector,
+            Func<T, T2> secondSelector)
+    {
+        List<T1> firstList = new();
+        List<T2> secondList = new();
+
+        foreach (var s in source)
+        {
+            firstList.Add(firstSelector(s));
+            secondList.Add(secondSelector(s));
+        }
+
+        return (firstList, secondList);
+    }
+
+    public static IEnumerable<int> GetIndices<T>(
+        this IEnumerable<T> inEnumerable,
+        Predicate<T> pred)
+    {
+        foreach (var (x1, i) in inEnumerable.WithIndex())
+        {
+            if (pred(x1))
+                yield return i;
+        }
+    }
+
+    public static IEnumerable<int> GetNonNullElementIndices<T>(
+        this IEnumerable<T> inEnumerable)
+    {
+        return inEnumerable
+            .GetIndices(x => x is not null);
+    }
+
+    public static HashSet<int> GetNonNullElementIndices<T1, T2>(
+        IEnumerable<T1> enumerable1,
+        IEnumerable<T2> enumerable2)
+    {
+        return enumerable1.GetNonNullElementIndices()
+            .Intersect(
+                enumerable2.GetNonNullElementIndices())
+            .ToHashSet();
+    }
+
+    public static IEnumerable<T> GetFilteredByIndices<T>(
+        IList<T> inArray,
+        IEnumerable<int> indices)
+    {
+        var filteredArr =
+            indices
+                .Select(index => inArray[index]);
+
+        return filteredArr;
+    }
+
     public static IEnumerable<(T item, int index)> WithIndex<T>(
         this IEnumerable<T> source)
     {
-        return source.Select((
-            item,
-            index) => (item, index));
+        return source.Select(
+            (
+                item,
+                index) => (item, index));
     }
+
+    public static bool ScrambledEquals<T>(
+        IEnumerable<T> list1,
+        IEnumerable<T> list2)
+    {
+        var cnt = new Dictionary<T, int>();
+        foreach (T s in list1)
+        {
+            if (cnt.ContainsKey(s))
+            {
+                cnt[s]++;
+            }
+            else
+            {
+                cnt.Add(
+                    s,
+                    1);
+            }
+        }
+
+        foreach (T s in list2)
+        {
+            if (cnt.ContainsKey(s))
+            {
+                cnt[s]--;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return cnt.Values.All(c => c == 0);
+    }
+}
+
+public static class ThreadSafeRandom
+{
+    [ThreadStatic] private static Random Local;
+
+    public static Random ThisThreadsRandom =>
+        Local ??= new Random(unchecked(Environment.TickCount * 31 + Thread.CurrentThread.ManagedThreadId));
 }

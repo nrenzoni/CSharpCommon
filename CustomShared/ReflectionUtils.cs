@@ -15,11 +15,29 @@ public static class ReflectionUtils
     private static readonly ILog Log = LogManager.GetLogger(typeof(ReflectionUtils));
 
     public static IEnumerable<string> GetPropertyNamesNonRecursive(
-        Type type)
+        Type type,
+        bool withGetter = true,
+        bool withSetter = true)
     {
+        if (!withGetter
+            && !withSetter)
+            throw new ArgumentException();
+
         var props =
             type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .OrderBy(p => p.Name);
+                .OrderBy(p => p.Name)
+                .Where(
+                    x =>
+                    {
+                        if (withGetter ^ withSetter)
+                        {
+                            return withGetter
+                                ? x.CanRead
+                                : x.CanWrite;
+                        }
+
+                        return x.CanRead && x.CanWrite;
+                    });
 
         foreach (var propertyInfo in props)
         {
@@ -142,9 +160,9 @@ public static class ReflectionUtils
         HashSet<string> skipFields = null,
         bool ignoreNested = false)
     {
-        var type = obj is Type
-            ? (Type)obj
-            : obj.GetType();
+        var type =
+            obj as Type ?? obj.GetType();
+
         var props = type.GetProperties()
             .OrderBy(p => p.Name); // ordering for consistency
 
@@ -389,5 +407,146 @@ public static class ReflectionUtils
 
         return loadableTypes.Where(candidateType.IsAssignableFrom)
             .ToList();
+    }
+
+    public static HashSet<string> GetPropertyNames(
+        Type type,
+        HashSet<Type> recursiveIgnoreTypes = null)
+    {
+        recursiveIgnoreTypes ??= DefaultRecursiveIgnoreTypes;
+
+        var props = type
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .OrderBy(p => p.Name);
+
+        var propNames = new HashSet<string>();
+
+        foreach (var propertyInfo in props)
+        {
+            if (recursiveIgnoreTypes?.Contains(propertyInfo.PropertyType) is true)
+            {
+                propNames.Add(propertyInfo.Name);
+                continue;
+            }
+
+            var propertyNamesAndValues =
+                GetPropertyNames(
+                    propertyInfo.PropertyType);
+
+            if (propertyNamesAndValues.Any())
+                foreach (var value in propertyNamesAndValues)
+                {
+                    propNames.Add(value);
+                }
+            else
+            {
+                propNames.Add(propertyInfo.Name);
+            }
+        }
+
+        return propNames;
+    }
+
+    private static readonly HashSet<Type> DefaultRecursiveIgnoreTypes = new()
+    {
+        typeof(decimal),
+        typeof(DecimalWithInf)
+    };
+
+    public static Dictionary<string, object>
+        GetPropertyNamesAndValues(
+            object inObj,
+            bool ignoreNull,
+            HashSet<Type> recursiveIgnoreTypes = null,
+            bool withSetter = true,
+            bool withGetter = true)
+    {
+        if (!withGetter
+            && !withSetter)
+            throw new ArgumentException();
+
+        recursiveIgnoreTypes ??= DefaultRecursiveIgnoreTypes;
+
+        var type =
+            inObj as Type ?? inObj.GetType();
+
+        var props1 = type
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .AsEnumerable();
+
+        if (withGetter ^ withSetter)
+        {
+            props1 =
+                withGetter
+                    ? props1.Where(x => x.CanRead)
+                    : props1.Where(x => x.CanWrite);
+        }
+
+        var props = props1
+            .OrderBy(p => p.Name);
+
+        var propNamesAndVals = new Dictionary<string, object>();
+
+        foreach (var propertyInfo in props)
+        {
+            object val;
+            if (inObj is Type)
+                val = propertyInfo.PropertyType;
+            else
+            {
+                if (propertyInfo.CanRead)
+                    val = propertyInfo.GetValue(inObj);
+                else
+                    continue;
+            }
+
+            if (recursiveIgnoreTypes?.Contains(propertyInfo.PropertyType) is true)
+            {
+                AddPropertyToDictHelper(
+                    val,
+                    propertyInfo.Name,
+                    ignoreNull,
+                    propNamesAndVals);
+                continue;
+            }
+
+            var propertyNamesAndValues =
+                GetPropertyNamesAndValues(
+                    val,
+                    ignoreNull,
+                    recursiveIgnoreTypes);
+
+            if (propertyNamesAndValues.Any())
+                foreach (var (key, value) in propertyNamesAndValues)
+                {
+                    propNamesAndVals[key] = value;
+                }
+            else
+            {
+                AddPropertyToDictHelper(
+                    val,
+                    propertyInfo.Name,
+                    ignoreNull,
+                    propNamesAndVals);
+            }
+        }
+
+        return propNamesAndVals;
+    }
+
+    private static void AddPropertyToDictHelper(
+        object val,
+        string propertyName,
+        bool ignoreNull,
+        Dictionary<string, object> propNamesAndVals)
+    {
+        if (val is null)
+        {
+            if (ignoreNull)
+                return;
+            val = "null";
+        }
+
+        propNamesAndVals[propertyName] = val;
     }
 }

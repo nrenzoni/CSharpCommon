@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
@@ -9,15 +8,21 @@ public class MicrosoftConfigurationLoader
 {
     public static T GetConfiguration<T>(
         IConfiguration configuration,
-        string sectionName)
+        string sectionName = null)
         where T : class, new()
     {
         var config = new T();
-        configuration.GetSection(sectionName).Bind(config);
+
+        var configurationSection =
+            sectionName is not null
+                ? configuration.GetSection(sectionName)
+                : configuration;
+        
+        configurationSection.Bind(config);
+
         return config;
     }
 
-    
     public static IConfiguration LoadMicrosoftConfiguration(
         params string[] appSettingsFiles)
     {

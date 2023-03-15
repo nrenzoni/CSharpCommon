@@ -1,5 +1,6 @@
 using CommonProto;
 using CustomShared;
+using NodaTime;
 using DecimalWithInf = CustomShared.DecimalWithInf;
 using LocalDate = NodaTime.LocalDate;
 
@@ -7,6 +8,14 @@ namespace GrpcShared;
 
 public static class GrpcCommonConverters
 {
+    public static CommonProto.Decimal? Convert(
+        decimal? inDecimal)
+    {
+        return !inDecimal.HasValue
+            ? null
+            : Convert(inDecimal.Value);
+    }
+
     public static CommonProto.Decimal Convert(
         decimal inDecimal)
     {
@@ -98,5 +107,65 @@ public static class GrpcCommonConverters
             Key = inKeyValueDecimal.Key,
             Value = Convert(inKeyValueDecimal.Value)
         };
+    }
+
+    public static UnixTicks Convert(
+        Instant time)
+    {
+        return new UnixTicks
+        {
+            Ticks = time.ToUnixTimeTicks()
+        };
+    }
+
+    public static Instant Convert(
+        UnixTicks unixTicks)
+    {
+        return Instant.FromUnixTimeTicks(unixTicks.Ticks);
+    }
+
+    public static StringsPerDayMap Convert(
+        Dictionary<LocalDate, List<string>> inStringsPerDay)
+    {
+        var outStringsPerDayMap = new StringsPerDayMap();
+
+        foreach (var (day, strings) in inStringsPerDay)
+        {
+            var stringsPerDay = new StringsPerDay()
+            {
+                Date = Convert(day)
+            };
+            stringsPerDay.Strings.Values.AddRange(strings);
+
+            outStringsPerDayMap.StringsPerDay.Add(stringsPerDay);
+        }
+
+        return outStringsPerDayMap;
+    }
+
+    public static Dictionary<LocalDate, List<string>> Convert(
+        StringsPerDayMap inStringsPerDay)
+    {
+        var outDic = new Dictionary<LocalDate, List<string>>();
+
+        foreach (var stringsPerDay in inStringsPerDay.StringsPerDay)
+        {
+            var localDate = Convert(stringsPerDay.Date);
+            outDic[localDate] = stringsPerDay.Strings.Values.ToList();
+        }
+
+        return outDic;
+    }
+
+    public static Dictionary<string, object> Convert(
+        NestedObjectDictionary inNestedDictionary)
+    {
+        return new Dictionary<string, object>();
+    }
+
+    public static NestedObjectDictionary Convert(
+        Dictionary<string, object> inNestedDictionary)
+    {
+        return new NestedObjectDictionary();
     }
 }

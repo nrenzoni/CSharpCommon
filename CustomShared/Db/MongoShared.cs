@@ -4,11 +4,10 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDb.Bson.NodaTime;
 using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
 
-namespace CustomShared;
+namespace CustomShared.Db;
 
 public static class MongoShared
 {
@@ -111,7 +110,7 @@ public static class MongoShared
                 {
                     case BsonType.Document:
                         var dictInner = new Dictionary<string, object>();
-                        DeserializeInner(
+                        MongoShared.DeserializeInner(
                             (BsonDocument)bsonElement.Value,
                             dictInner);
                         dict[name] = dictInner;
@@ -129,27 +128,52 @@ public static class MongoShared
 
             return dict;
         }
+    }
 
-        public void DeserializeInner(
-            BsonDocument bsonDocument,
-            Dictionary<string, object> dict)
+    public static void DeserializeInner(
+        BsonDocument bsonDocument,
+        Dictionary<string, object> dict)
+    {
+        foreach (var bsonElement in bsonDocument)
         {
-            foreach (var bsonElement in bsonDocument)
+            object value;
+
+            if (bsonElement.Value.BsonType is BsonType.Document)
             {
-                object value;
+                Dictionary<string, object> innerDict = new();
+                value = innerDict;
+                DeserializeInner(
+                    (BsonDocument)bsonElement.Value,
+                    innerDict);
+            }
+            else
+                value = bsonElement.Value;
 
-                if (bsonElement.Value.BsonType is BsonType.Document)
+            dict[bsonElement.Name] = value;
+        }
+    }
+
+    public static void RemoveTypeDiscriminatorsFromBsonDocumentInPlace(
+        this BsonDocument bsonDocument,
+        string discriminatorKey = "_t")
+    {
+        foreach (var bsonElement in bsonDocument.Values)
+        {
+            if (bsonElement is BsonDocument doc)
+            {
+                var success = doc.TryGetElement(
+                    discriminatorKey,
+                    out var elem);
+
+                if (success)
                 {
-                    Dictionary<string, object> innerDict = new();
-                    value = innerDict;
-                    DeserializeInner(
-                        (BsonDocument)bsonElement.Value,
-                        innerDict);
+                    doc.RemoveElement(elem);
+                    continue;
                 }
-                else
-                    value = bsonElement.Value;
 
-                dict[bsonElement.Name] = value;
+                RemoveTypeDiscriminatorsFromBsonDocumentInPlace(
+                    bsonElement.ToBsonDocument(),
+                    discriminatorKey);
             }
         }
     }

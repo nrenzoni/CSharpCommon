@@ -23,6 +23,6 @@ public static class LogConfig
     public static void LogToConsoleForDebug()
     {
         BasicConfigurator.Configure();
-        ((log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository()).Root.Level = Level.Info;
+        ((log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository()).Root.Level = Level.Debug;
     }
 }

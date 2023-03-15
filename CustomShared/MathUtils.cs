@@ -92,6 +92,19 @@ public static class MathUtils
             ? 1
             : 0;
 
+    public static int BoolTo1OrNegative(
+        this bool inBool,
+        bool trueIsPositive)
+    {
+        if (trueIsPositive)
+            return inBool
+                ? 1
+                : -1;
+        return inBool
+            ? -1
+            : 1;
+    }
+
     public static decimal DecimalFromParts(
         long wholePart,
         ulong fractional,
@@ -169,40 +182,64 @@ public static class MathUtils
         return d;
     }
 
-    public static IEnumerable<decimal> UnrollRange(
-        decimal begin,
-        decimal end,
-        decimal step,
-        bool beginInclusive,
-        bool endInclusive)
+    public static (List<IndexedValuePoints<decimal>>, decimal BinSize)
+        CalcHistogram(
+            IList<decimal> vals,
+            decimal? binSize = null,
+            uint? binCount = null,
+            decimal? center = null)
     {
-        var curr = begin;
+        if (binCount == 0)
+            throw new ArgumentException($"{nameof(binCount)} cannot be 0.");
 
-        if (!beginInclusive)
-            curr += step;
+        if (binSize < 0)
+            throw new ArgumentException($"{nameof(binSize)} cannot be less than 0.");
 
-        if (endInclusive)
+        if (binSize.HasValue
+            && binCount.HasValue)
+            throw new ArgumentException($"Cannot have both {nameof(binSize)} and {nameof(binCount)} set.");
+
+        if (!binSize.HasValue) // binCount has val
         {
-            while (true)
+            var min = decimal.MaxValue;
+            var max = decimal.MinValue;
+            foreach (var valsOrdered in vals.Order())
             {
-                if (curr > end)
-                    yield break;
-
-                yield return curr;
-
-                curr += step;
+                min = Math.Min(
+                    min,
+                    valsOrdered);
+                max = Math.Max(
+                    max,
+                    valsOrdered);
             }
+
+            binSize = (max - min) / binCount;
         }
 
-        // !endInclusive
-        while (true)
+        FixedRangeBinGrouper<decimal> binGrouper = new(
+            binSize!.Value,
+            center);
+
+        uint totCount = 0;
+
+        foreach (var val in vals)
         {
-            if (curr >= end)
-                yield break;
-
-            yield return curr;
-
-            curr += step;
+            binGrouper.Emplace(
+                val,
+                val);
+            totCount++;
         }
+
+        List<IndexedValuePoints<decimal>> PercPerBin = new();
+
+        foreach (var (binStart, groupCount) in binGrouper.GetBinsWithCountsIncludingEmpty())
+        {
+            PercPerBin.Add(
+                new(
+                    (decimal)groupCount / totCount,
+                    binStart));
+        }
+
+        return (PercPerBin, binSize.Value);
     }
 }
