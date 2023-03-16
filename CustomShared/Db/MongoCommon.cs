@@ -27,11 +27,14 @@ public static class MongoCommon
     }
 
     public static IMongoCollection<BsonDocument> BuildCollection(
+        MongoConfiguration mongoConfiguration,
         string dbName,
         string collectionName,
         bool isTest = false)
     {
-        var mongoClient = GetMongoClient(isTest);
+        var mongoClient = GetMongoClient(
+            mongoConfiguration.ConnectionString,
+            isTest);
 
         Log.Info($"Building Mongo collection for [db: {dbName}] [collection: {collectionName}].");
 
@@ -67,16 +70,6 @@ public static class MongoCommon
         return isTest
             ? _mongoClientTest
             : _mongoClientProd;
-    }
-
-    public static MongoClient GetMongoClient(
-        bool isTest = false)
-    {
-        return GetMongoClient(
-            isTest
-                ? ConfigVariables.TestInstance.MongoConn
-                : ConfigVariables.Instance.MongoConn,
-            isTest);
     }
 
     public static void SaveOrUpdateSingle<T>(

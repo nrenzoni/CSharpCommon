@@ -135,7 +135,10 @@ public static class GrpcCommonConverters
             {
                 Date = Convert(day)
             };
-            stringsPerDay.Strings.Values.AddRange(strings);
+            var newListOfStrings = new ListOfStrings();
+            newListOfStrings.Values.AddRange(strings);
+
+            stringsPerDay.Strings = newListOfStrings;
 
             outStringsPerDayMap.StringsPerDay.Add(stringsPerDay);
         }

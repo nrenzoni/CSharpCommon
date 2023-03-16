@@ -89,8 +89,6 @@ public class ConfigVariables : IConfigVariables
     public string LogConfigFile { get; protected set; }
     // public string TestDataDirectory { get; protected set; }
 
-    public string MongoConn { get; protected set; } = "mongodb://localhost:27017/?compressors=zstd";
-
     protected static T MakeTestConfigVariables<T>() where T : ConfigVariables, new()
     {
         var configVariables = ConfigVariableUtils.LoadFromEnv<T>();
