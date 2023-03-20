@@ -189,4 +189,28 @@ public static class GrpcCommonConverters
             Convert(inDecimalIndexedValuePoint.Index),
             Convert(inDecimalIndexedValuePoint.Value));
     }
+
+    public static MarketDateRange Convert(
+        DateRangeIncl inDateRange)
+    {
+        var startDate = Convert(inDateRange.StartDate);
+        var endDate = Convert(inDateRange.EndDateIncl);
+
+        return new MarketDateRange(
+            startDate,
+            endDate);
+    }
+
+    public static DateRangeIncl Convert(
+        MarketDateRange inDateRange)
+    {
+        var startDate = Convert(inDateRange.StartDate);
+        var endDateIncl = Convert(inDateRange.EndDate);
+
+        return new DateRangeIncl
+        {
+            StartDate = startDate,
+            EndDateIncl = endDateIncl
+        };
+    }
 }
