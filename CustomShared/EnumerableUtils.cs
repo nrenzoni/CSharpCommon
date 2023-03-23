@@ -385,6 +385,20 @@ public static class EnumerableUtils
 
         return cnt.Values.All(c => c == 0);
     }
+    
+    public static int GetHashCodeByItems<T>(this IEnumerable<T> enumerable)
+    {
+        unchecked
+        {
+            var hash = 19;
+            foreach (T item in enumerable)
+            {
+                hash = hash * 31 + (item != null ? item.GetHashCode() : 1);
+            }
+            return hash;
+        }
+    }
+
 }
 
 public static class ThreadSafeRandom
