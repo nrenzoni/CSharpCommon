@@ -39,4 +39,10 @@ public static class DictionaryExtensions
             separator,
             lines);
     }
+
+    public static Dictionary<TKey, object> WithValueAsObj<TKey, TValue>(this Dictionary<TKey, TValue> inDic)
+    {
+        return inDic.ToDictionary(kv => kv.Key,
+            kv => (object)kv.Value);
+    }
 }

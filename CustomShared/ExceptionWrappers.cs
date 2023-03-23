@@ -68,4 +68,21 @@ public class ExceptionFuncs
             $"Max retries made for {requestFuncName}.",
             e);
     }
+
+    public static void RunWithRetries(
+        Action requestFunc,
+        string requestFuncName,
+        uint? retryCount,
+        TimeSpan delayBetweenRetries)
+    {
+        RunWithRetries(
+            () =>
+            {
+                requestFunc();
+                return (int?)null;
+            },
+            requestFuncName,
+            retryCount,
+            delayBetweenRetries);
+    }
 }

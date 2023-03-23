@@ -353,7 +353,7 @@ public static class EnumerableUtils
     }
 
     public static bool ScrambledEquals<T>(
-        IEnumerable<T> list1,
+        this IEnumerable<T> list1,
         IEnumerable<T> list2)
     {
         var cnt = new Dictionary<T, int>();

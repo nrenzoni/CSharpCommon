@@ -100,6 +100,12 @@ public class MarketDayChecker
         LocalDate startDate,
         LocalDate endDateIncl)
     {
+        var startDateYear = startDate.Year;
+        var endDateYear = endDateIncl.Year;
+        if (startDateYear < 1950 || endDateYear < 1950 || startDateYear > 2100 || endDateYear > 2100)
+            throw new ArgumentException(
+                $"Either {nameof(startDate)} {startDate} or {nameof(endDateIncl)} {endDateIncl} has a non valid date for {nameof(GetMarketOpenDaysInRangeInclLast)}().");
+
         if (startDate > endDateIncl)
             throw new Exception($"param {nameof(startDate)} must have value below or equal to {nameof(endDateIncl)}");
 
