@@ -213,4 +213,22 @@ public static class GrpcCommonConverters
             EndDateIncl = endDateIncl
         };
     }
+
+    public static StringDayPair Convert(
+        (string, LocalDate) inStringDayPair)
+    {
+        var date = Convert(inStringDayPair.Item2);
+
+        return new StringDayPair
+        {
+            String = inStringDayPair.Item1,
+            Date = date
+        };
+    }
+
+    public static (string, LocalDate) Convert(
+        StringDayPair inStringDayPair)
+    {
+        return (inStringDayPair.String, GrpcCommonConverters.Convert(inStringDayPair.Date));
+    }
 }
