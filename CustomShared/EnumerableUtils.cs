@@ -327,8 +327,7 @@ public static class EnumerableUtils
         IEnumerable<T2> enumerable2)
     {
         return enumerable1.GetNonNullElementIndices()
-            .Intersect(
-                enumerable2.GetNonNullElementIndices())
+            .Intersect(enumerable2.GetNonNullElementIndices())
             .ToHashSet();
     }
 
@@ -385,8 +384,9 @@ public static class EnumerableUtils
 
         return cnt.Values.All(c => c == 0);
     }
-    
-    public static int GetHashCodeByItems<T>(this IEnumerable<T> enumerable)
+
+    public static int GetHashCodeByItems<T>(
+        this IEnumerable<T> enumerable)
     {
         unchecked
         {
@@ -395,10 +395,24 @@ public static class EnumerableUtils
             {
                 hash = hash * 31 + (item != null ? item.GetHashCode() : 1);
             }
+
             return hash;
         }
     }
 
+    public static bool IsUnique<T>(
+        IEnumerable<T> values)
+    {
+        var set = new HashSet<T>();
+
+        foreach (var item in values)
+        {
+            if (!set.Add(item))
+                return false;
+        }
+
+        return true;
+    }
 }
 
 public static class ThreadSafeRandom

@@ -125,7 +125,7 @@ public static class BinarySearchHelpers
     }
 
     public static BinarySearchResult CustomBinarySearch<T>(
-        this List<T> list,
+        this IList<T?> list,
         T value)
     {
         var binarySearchIntResult = list.BinarySearch(
