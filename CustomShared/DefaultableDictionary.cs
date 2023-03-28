@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace CustomShared;
 
@@ -31,16 +32,19 @@ public class DefaultableDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         return GetEnumerator();
     }
 
+    [CollectionAccess(CollectionAccessType.UpdatedContent)]
     public void Add(KeyValuePair<TKey, TValue> item)
     {
         _dictionary.Add(item);
     }
 
+    [CollectionAccess(CollectionAccessType.UpdatedContent)]
     public void Clear()
     {
         _dictionary.Clear();
     }
 
+    [CollectionAccess(CollectionAccessType.Read)]
     public bool Contains(KeyValuePair<TKey, TValue> item)
     {
         return _dictionary.Contains(item);
@@ -51,6 +55,7 @@ public class DefaultableDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         _dictionary.CopyTo(array, arrayIndex);
     }
 
+    [CollectionAccess(CollectionAccessType.UpdatedContent)]
     public bool Remove(KeyValuePair<TKey, TValue> item)
     {
         return _dictionary.Remove(item);
@@ -60,16 +65,19 @@ public class DefaultableDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 
     public bool IsReadOnly => _dictionary.IsReadOnly;
 
+    [CollectionAccess(CollectionAccessType.Read)]
     public bool ContainsKey(TKey key)
     {
         return _dictionary.ContainsKey(key);
     }
 
+    [CollectionAccess(CollectionAccessType.UpdatedContent)]
     public void Add(TKey key, TValue value)
     {
         _dictionary.Add(key, value);
     }
 
+    [CollectionAccess(CollectionAccessType.UpdatedContent)]
     public bool Remove(TKey key)
     {
         return _dictionary.Remove(key);
@@ -85,6 +93,7 @@ public class DefaultableDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         return true;
     }
 
+    [CollectionAccess(CollectionAccessType.UpdatedContent)]
     public TValue this[TKey key]
     {
         get
