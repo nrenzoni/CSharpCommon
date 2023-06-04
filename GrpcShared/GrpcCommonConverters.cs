@@ -99,6 +99,12 @@ public static class GrpcCommonConverters
         KeyValueDecimal inKeyValueDecimal)
         => (inKeyValueDecimal.Key, Convert(inKeyValueDecimal.Value));
 
+    public static List<KeyValueDecimal> Convert(
+        IDictionary<string, decimal> inDictionary)
+    {
+        return inDictionary.Select(Convert).ToList();
+    }
+
     public static KeyValueDecimal Convert(
         KeyValuePair<string, decimal> inKeyValueDecimal)
     {
