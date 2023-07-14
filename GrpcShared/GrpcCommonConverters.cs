@@ -8,6 +8,16 @@ namespace GrpcShared;
 
 public static class GrpcCommonConverters
 {
+    public static TTo? ConvertIfNotNull<TFrom, TTo>(
+        Func<TFrom, TTo> convertFunc,
+        TFrom? input)
+        where TTo : struct
+    {
+        return input == null
+            ? null
+            : convertFunc(input);
+    }
+
     public static CommonProto.Decimal? Convert(
         decimal? inDecimal)
     {
