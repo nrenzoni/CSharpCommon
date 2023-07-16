@@ -6,21 +6,38 @@ namespace CustomShared;
 
 public class MicrosoftConfigurationLoader
 {
+    public static object GetConfiguration(
+        IConfiguration configuration,
+        Type type,
+        string sectionName = null)
+    {
+        IConfiguration configurationSection;
+
+        if (sectionName is not null)
+        {
+            var configSection = configuration.GetSection(sectionName);
+
+            if (!configSection.Exists())
+                throw new Exception($"Section {sectionName} of type {type} is not defined in the configuration.");
+
+            configurationSection = configSection;
+        }
+        else
+            configurationSection = configuration;
+
+        return configurationSection.Get(type);
+    }
+
     public static T GetConfiguration<T>(
         IConfiguration configuration,
         string sectionName = null)
-        where T : class, new()
     {
-        var config = new T();
-
         var configurationSection =
             sectionName is not null
                 ? configuration.GetSection(sectionName)
                 : configuration;
-        
-        configurationSection.Bind(config);
 
-        return config;
+        return configurationSection.Get<T>();
     }
 
     public static IConfiguration LoadMicrosoftConfiguration(

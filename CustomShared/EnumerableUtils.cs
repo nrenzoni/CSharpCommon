@@ -3,15 +3,107 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
+using NodaTime;
 
 namespace CustomShared;
 
 public static class EnumerableUtils
 {
+    public static List<T> FilterInRange<T>(
+        this List<T> series,
+        Func<T, LocalTime> extractTimePredicate,
+        LocalTime? startTime = null,
+        LocalTime? endTime = null,
+        bool startTimeInclusive = true,
+        bool endTimeInclusive = false)
+    {
+        if (startTime is null
+            && endTime is null)
+            return new List<T>(series);
+
+        var newSeriesInRange = new List<T>();
+
+        foreach (var item in series)
+        {
+            var nyLocalTime = extractTimePredicate(item);
+
+            if (startTime is not null)
+            {
+                if (startTimeInclusive)
+                {
+                    if (nyLocalTime < startTime)
+                        continue;
+                }
+                else if (nyLocalTime <= startTime)
+                    continue;
+            }
+
+            if (endTime is not null)
+            {
+                if (endTimeInclusive)
+                {
+                    if (nyLocalTime > endTime)
+                        break;
+                }
+                else if (nyLocalTime >= endTime)
+                    break;
+            }
+
+            newSeriesInRange.Add(item);
+        }
+
+        return new List<T>(newSeriesInRange);
+    }
+
+    public static int FirstIndex<TSource>(
+        this IEnumerable<TSource> source,
+        Func<TSource, bool> predicate)
+    {
+        foreach (var (item, index) in source.WithIndex())
+        {
+            if (predicate(item))
+                return index;
+        }
+
+        return -1;
+    }
+
+    public static List<int> SortIndices<T>(
+        List<T> input,
+        IComparer<T> comparer)
+        where T : IComparable<T>
+    {
+        if (input.Count == 0)
+        {
+            return new List<int>();
+        }
+
+        var items = Enumerable.Range(
+                0,
+                input.Count)
+            .ToList();
+
+        items.Sort(
+            Comparer<int>.Create(
+                (
+                    x,
+                    y) => comparer.Compare(
+                    input[x],
+                    input[y])));
+
+        return items;
+    }
+
     public static KeyValuePair<uint, T> MaxIndex<T>(
         this IEnumerable<T> source)
+        => MaxIndex(
+            source,
+            Comparer<T>.Default);
+
+    public static KeyValuePair<uint, T> MaxIndex<T>(
+        this IEnumerable<T> source,
+        IComparer<T> comparer)
     {
-        IComparer<T> comparer = Comparer<T>.Default;
         using var iterator = source.GetEnumerator();
 
         if (!iterator.MoveNext())
@@ -393,7 +485,9 @@ public static class EnumerableUtils
             var hash = 19;
             foreach (T item in enumerable)
             {
-                hash = hash * 31 + (item != null ? item.GetHashCode() : 1);
+                hash = hash * 31 + (item != null
+                    ? item.GetHashCode()
+                    : 1);
             }
 
             return hash;
@@ -412,6 +506,35 @@ public static class EnumerableUtils
         }
 
         return true;
+    }
+
+    public static IEnumerable<T?> FillForward<T>(
+        IEnumerable<T?> vals)
+        where T : struct
+    {
+        using var enumerator = vals.GetEnumerator();
+
+        if (!enumerator.MoveNext())
+            yield return null;
+
+        var prior = enumerator.Current;
+
+        yield return prior;
+        
+        while (enumerator.MoveNext())
+        {
+            var curr = enumerator.Current;
+
+            if (curr == null)
+            {
+                yield return prior;
+                continue;
+            }
+
+            prior = curr;
+
+            yield return curr;
+        }
     }
 }
 

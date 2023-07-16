@@ -18,6 +18,16 @@ public static class GrpcCommonConverters
             : convertFunc(input);
     }
 
+    public static TTo? ConvertIfNotNull2<TFrom, TTo>(
+        Func<TFrom, TTo> convertFunc,
+        TFrom? input)
+        where TTo : class
+    {
+        return input == null
+            ? null
+            : convertFunc(input);
+    }
+
     public static CommonProto.Decimal? Convert(
         decimal? inDecimal)
     {

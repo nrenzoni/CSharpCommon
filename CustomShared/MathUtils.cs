@@ -242,7 +242,7 @@ public static class MathUtils
 
         return (PercPerBin, binSize.Value);
     }
-    
+
     public static IEnumerable<decimal> UnrollRange(
         decimal begin,
         decimal end,
@@ -278,5 +278,68 @@ public static class MathUtils
 
             curr += step;
         }
+    }
+
+    public static decimal? CalcMean(
+        this IEnumerable<decimal?> inEnumerable)
+    {
+        return inEnumerable.Where(x => x.HasValue).Average();
+    }
+
+    public static decimal CalcMean(
+        this IEnumerable<decimal> inEnumerable)
+    {
+        return inEnumerable.Average();
+    }
+
+    public static decimal? Median(
+        this IEnumerable<decimal?> inEnumerable,
+        bool ignoreNull = true)
+    {
+        var list = ignoreNull
+            ? inEnumerable.Where(x => x is not null).ToList()
+            : inEnumerable.ToList();
+        list.Sort();
+        return list[list.Count / 2];
+    }
+
+    public static decimal? Min(
+        decimal? dec1,
+        decimal? dec2)
+    {
+        if (dec1.HasValue
+            && !dec2.HasValue)
+            return dec1;
+        if (!dec1.HasValue
+            && dec2.HasValue)
+            return dec2;
+
+        if (!dec1.HasValue
+            && !dec2.HasValue)
+            return null;
+
+        return Math.Min(
+            dec1.Value,
+            dec2.Value);
+    }
+
+    public static decimal? Max(
+        decimal? dec1,
+        decimal? dec2)
+    {
+        if (dec1.HasValue
+            && !dec2.HasValue)
+            return dec1;
+        if (!dec1.HasValue
+            && dec2.HasValue)
+            return dec2;
+
+        if (!dec1.HasValue
+            && !dec2.HasValue)
+            return null;
+
+        return Math.Max(
+            dec1.Value,
+            dec2.Value);
     }
 }

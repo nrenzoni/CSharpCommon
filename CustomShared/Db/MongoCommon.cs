@@ -121,7 +121,13 @@ public static class MongoCommon
             bulkOps.Add(writeModel);
         }
 
-        mongoCollection.BulkWrite(bulkOps);
+        mongoCollection.BulkWrite(
+            bulkOps,
+            new BulkWriteOptions
+            {
+                // prevents duplicate key error, still throws exception if tried writing duplicate
+                IsOrdered = false
+            });
     }
 
     public static void SaveOrUpdateListFromBsonDocuments<T>(

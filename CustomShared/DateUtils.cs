@@ -11,7 +11,7 @@ public static class DateUtils
 {
     private static readonly ILog Log = LogManager.GetLogger(typeof(DateUtils));
 
-    public static string NyTzStringSpecifier = "America/New_York";
+    public static readonly string NyTzStringSpecifier = "America/New_York";
 
     public static readonly DateTimeZone NyDateTz = DateTimeZoneProviders.Tzdb[NyTzStringSpecifier];
 
@@ -24,6 +24,9 @@ public static class DateUtils
 
     public static readonly LocalTimePattern LocalTimePattern =
         LocalTimePattern.CreateWithCurrentCulture(TimePattern);
+
+    public static readonly InstantPattern InstantFullPattern =
+        InstantPattern.CreateWithInvariantCulture("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffff'Z'");
 
     public static IList<LocalDate> EachLocalDay(
         LocalDate from,
@@ -120,6 +123,12 @@ public static class DateUtils
     public static DateTime ConvertToUtcFromNy(
         this DateTime dateTime)
         => NyDateTz.AtStrictly(LocalDateTime.FromDateTime(dateTime)).ToDateTimeUtc();
+
+    public static Instant ParseToInstant(
+        this string instantStr)
+    {
+        return InstantFullPattern.Parse(instantStr).Value;
+    }
 
     public static LocalDate ParseToLocalDate(
         this string formattedDateStr)
@@ -324,9 +333,7 @@ public static class DateUtils
     public static string ToStringFull(
         this Instant instant)
     {
-        return instant.ToString(
-            "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffff'Z'",
-            null);
+        return InstantFullPattern.Format(instant);
     }
 
     public static string ToStringFullDbSafe(
@@ -357,4 +364,9 @@ public static class DateUtils
         => date
             .AtStartOfDayInZone(DateUtils.NyDateTz)
             .ToInstant();
+
+    public static Instant InNyZoneInstant(
+        LocalDate localDate,
+        LocalTime localTime)
+        => (localDate + localTime).InZoneStrictly(NyDateTz).ToInstant();
 }
