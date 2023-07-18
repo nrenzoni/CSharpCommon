@@ -45,14 +45,29 @@ public class GrpcClientCommon
     }
 }
 
-public abstract class GrpcClientWrapperBase
+public abstract class GrpcClientWrapperBase<T> : IDisposable
+    where T : ClientBase<T>
 {
-    private readonly ClientBase _client;
+    private ClientBase<T>? _client;
 
-    protected GrpcClientWrapperBase(
-        ClientBase client)
+    private GrpcChannel? _grpcChannel;
+
+    protected void DelayedInitClient(
+        GrpcChannel channel,
+        ClientBase<T> client)
     {
+        _grpcChannel = channel;
         _client = client;
+    }
+
+    private ClientBase<T> Client
+    {
+        get
+        {
+            if (_client == null)
+                throw new Exception($"Must call {nameof(DelayedInitClient)} before accessing {nameof(Client)}.");
+            return _client;
+        }
     }
 
     // no input arg and matching converter
@@ -66,7 +81,7 @@ public abstract class GrpcClientWrapperBase
 
         object[]? args = null;
 
-        var clientType = _client.GetType();
+        var clientType = Client.GetType();
 
         var methodInfo = clientType.GetMethod(methodName);
 
@@ -82,7 +97,7 @@ public abstract class GrpcClientWrapperBase
         }
 
         var resultTask = (Task<TReturn>)methodInfo.Invoke(
-            _client,
+            Client,
             args)!;
 
         await resultTask;
@@ -115,7 +130,7 @@ public abstract class GrpcClientWrapperBase
             };
         }
 
-        var clientType = _client.GetType();
+        var clientType = Client.GetType();
 
         var methodInfo = clientType.GetMethod(methodName);
 
@@ -131,7 +146,7 @@ public abstract class GrpcClientWrapperBase
         }
 
         var resultTask = (Task<TReturn>)methodInfo.Invoke(
-            _client,
+            Client,
             args)!;
 
         await resultTask;
@@ -140,6 +155,9 @@ public abstract class GrpcClientWrapperBase
 
         return outGrpcCallConverter(resultResult);
     }
-    
-    
+
+    public void Dispose()
+    {
+        _grpcChannel?.Dispose();
+    }
 }
