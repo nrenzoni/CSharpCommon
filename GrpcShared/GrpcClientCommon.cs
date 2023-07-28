@@ -117,6 +117,22 @@ public abstract class GrpcClientWrapperBase<T> : IDisposable
         if (!methodName.EndsWith(asyncKeyword))
             throw new Exception($"Only methods ending with {asyncKeyword} currently supported.");
 
+        var clientType = Client.GetType();
+
+        var methodInfos = clientType.GetMethods();
+
+        var matchingMethods = methodInfos.Where(x => x.Name == methodName
+            && x.GetParameters().Length > 2)
+            .ToList();
+
+        if (matchingMethods.Count != 1)
+            throw new Exception();
+        
+        var methodInfo = matchingMethods.First();
+
+        if (methodInfo is null)
+            throw new Exception($"Method {methodName} not found in type {clientType}.");
+        
         object[]? args = null;
 
         if (inputArgs != null)
@@ -126,34 +142,20 @@ public abstract class GrpcClientWrapperBase<T> : IDisposable
 
             args = new object[]
             {
-                inArgsConverter(inputArgs)
+                inArgsConverter(inputArgs),
+                Type.Missing,
+                Type.Missing,
+                Type.Missing
             };
         }
-
-        var clientType = Client.GetType();
-
-        var methodInfo = clientType.GetMethod(methodName);
-
-        if (methodInfo is null)
-            throw new Exception($"Method {methodName} not found in type {clientType}.");
-
-        var methodParameterInfos = methodInfo.GetParameters();
-
-        if (methodParameterInfos.Length != 1)
-        {
-            throw new Exception(
-                $"Method {methodName} has {methodParameterInfos.Length} parameters, but was attempted to be invoked with one.");
-        }
-
-        var resultTask = (Task<TReturn>)methodInfo.Invoke(
+        
+        var resultTask = (AsyncUnaryCall<TReturn>)methodInfo.Invoke(
             Client,
             args)!;
 
-        await resultTask;
-
-        var resultResult = resultTask.Result;
-
-        return outGrpcCallConverter(resultResult);
+        var result = await resultTask;
+        
+        return outGrpcCallConverter(result);
     }
 
     public void Dispose()
