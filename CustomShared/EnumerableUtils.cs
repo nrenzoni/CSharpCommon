@@ -95,13 +95,13 @@ public static class EnumerableUtils
         return items;
     }
 
-    public static KeyValuePair<uint, T> MaxIndex<T>(
+    public static KeyValuePair<uint, T>? MaxIndex<T>(
         this IEnumerable<T> source)
         => MaxIndex(
             source,
             Comparer<T>.Default);
 
-    public static KeyValuePair<uint, T> MaxIndex<T>(
+    public static KeyValuePair<uint, T>? MaxIndex<T>(
         this IEnumerable<T> source,
         IComparer<T> comparer)
     {
@@ -109,6 +109,7 @@ public static class EnumerableUtils
 
         if (!iterator.MoveNext())
         {
+            return null;
             throw new InvalidOperationException("Empty sequence");
         }
 

@@ -229,8 +229,7 @@ public static class DateUtils
 
         int hour = dateTimeUtc.Hour,
             minute = dateTimeUtc.Minute,
-            second = dateTimeUtc.Second,
-            millisecond = dateTimeUtc.Millisecond;
+            second = dateTimeUtc.Second;
 
         if (roundDown.Hours != 0)
             hour -= hour % roundDown.Hours;
@@ -245,16 +244,11 @@ public static class DateUtils
         else if (roundDown >= Duration.FromMinutes(1))
             second = 0;
 
-        if (roundDown.Milliseconds != 0)
-            millisecond -= millisecond % roundDown.Milliseconds;
-        else if (roundDown >= Duration.FromSeconds(1))
-            millisecond = 0;
-
+        // no need to set millisecond, set to 0 by default
         var timeFloored = new LocalTime(
             hour,
             minute,
-            second,
-            millisecond);
+            second);
 
         return (dateUtc + timeFloored).InZoneStrictly(DateTimeZone.Utc).ToInstant();
     }
@@ -319,11 +313,11 @@ public static class DateUtils
 
     public static IEnumerable<Instant> GetInstantsInRange(
         Instant startRange,
-        Instant endRange,
+        Instant endRangeExcl,
         Duration offset)
     {
         Instant nextInstant = startRange;
-        while (nextInstant < endRange)
+        while (nextInstant < endRangeExcl)
         {
             yield return nextInstant;
             nextInstant += offset;
