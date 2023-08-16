@@ -7,25 +7,21 @@ namespace CustomShared;
 
 public static class MathUtils
 {
-    public static decimal Max(
-        decimal[] vals)
+    public static decimal Max(decimal[] vals)
         => vals.Max();
 
-    public static Int64 WholePart(
-        this decimal value)
+    public static Int64 WholePart(this decimal value)
     {
         return Convert.ToInt64(Math.Truncate(value));
     }
 
-    public static UInt64 WholePositiveOnly(
-        this decimal value)
+    public static UInt64 WholePositiveOnly(this decimal value)
     {
         return Convert.ToUInt64(Math.Abs(Math.Truncate(value)));
     }
 
     // max fractionalPart of 19 places
-    public static (UInt64 fractionalPart, UInt32 shiftCount) FractionalPart(
-        this decimal value)
+    public static (UInt64 fractionalPart, UInt32 shiftCount) FractionalPart(this decimal value)
     {
         if (value == 0M)
             return (0, 0);
@@ -74,8 +70,7 @@ public static class MathUtils
         return (Convert.ToUInt64(shiftedRight), shiftCount);
     }
 
-    public static String FmtOnlyFractional(
-        this Decimal value)
+    public static String FmtOnlyFractional(this Decimal value)
     {
         Decimal fractionalPart = Math.Abs(value - Decimal.Truncate(value));
         return (fractionalPart == 0)
@@ -86,8 +81,7 @@ public static class MathUtils
                 .Substring(startIndex: 1);
     }
 
-    public static int BoolToInt(
-        this bool inBool)
+    public static int BoolToInt(this bool inBool)
         => inBool
             ? 1
             : 0;
@@ -140,8 +134,7 @@ public static class MathUtils
         return posDec;
     }
 
-    public static uint NumberOfDigits(
-        this ulong n)
+    public static uint NumberOfDigits(this ulong n)
         => (uint)Math.Floor(Math.Log10(n) + 1);
 
     public static decimal TruncateDecimalPlaces(
@@ -280,14 +273,12 @@ public static class MathUtils
         }
     }
 
-    public static decimal? CalcMean(
-        this IEnumerable<decimal?> inEnumerable)
+    public static decimal? CalcMean(this IEnumerable<decimal?> inEnumerable)
     {
         return inEnumerable.Where(x => x.HasValue).Average();
     }
 
-    public static decimal CalcMean(
-        this IEnumerable<decimal> inEnumerable)
+    public static decimal CalcMean(this IEnumerable<decimal> inEnumerable)
     {
         return inEnumerable.Average();
     }
@@ -342,4 +333,12 @@ public static class MathUtils
             dec1.Value,
             dec2.Value);
     }
+
+    public static double ConvertToDouble(this decimal inVal)
+        => System.Convert.ToDouble(inVal);
+
+    public static double? ConvertToDouble(this decimal? inVal)
+        => inVal.HasValue
+            ? System.Convert.ToDouble(inVal.Value)
+            : null;
 }

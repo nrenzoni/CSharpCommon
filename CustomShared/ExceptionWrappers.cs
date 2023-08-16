@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace CustomShared;
 
@@ -8,8 +9,8 @@ public class ExceptionFuncs
     public static async Task<T> RunWithRetries<T>(
         Func<Task<T>> requestFunc,
         string requestFuncName,
-        uint? retryCount,
-        TimeSpan delayBetweenRetries)
+        uint? retryCount = null,
+        TimeSpan? delayBetweenRetries = null)
     {
         var remainingTries = retryCount + 1;
 
@@ -27,7 +28,8 @@ public class ExceptionFuncs
                 // ignored
             }
 
-            await Task.Delay(delayBetweenRetries);
+            if (delayBetweenRetries != null)
+                Task.Delay(delayBetweenRetries.Value).Wait();
 
             remainingTries--;
         }
@@ -39,9 +41,9 @@ public class ExceptionFuncs
 
     public static T RunWithRetries<T>(
         Func<T> requestFunc,
-        string requestFuncName,
-        uint? retryCount,
-        TimeSpan delayBetweenRetries)
+        [CanBeNull] string requestFuncName = null,
+        uint? retryCount = null,
+        TimeSpan? delayBetweenRetries = null)
     {
         var remainingTries = retryCount + 1;
 
@@ -59,25 +61,26 @@ public class ExceptionFuncs
                 // ignored
             }
 
-            Task.Delay(delayBetweenRetries).Wait();
+            if (delayBetweenRetries != null)
+                Task.Delay(delayBetweenRetries.Value).Wait();
 
             remainingTries--;
         }
 
+        var funcName = requestFuncName ?? "function";
         throw new Exception(
-            $"Max retries made for {requestFuncName}.",
+            $"Max retries made for {funcName}.",
             e);
     }
 
     public static void RunWithRetries(
         Action requestFunc,
         string requestFuncName,
-        uint? retryCount,
-        TimeSpan delayBetweenRetries)
+        uint? retryCount = null,
+        TimeSpan? delayBetweenRetries = null)
     {
         RunWithRetries(
-            () =>
-            {
+            () => {
                 requestFunc();
                 return (int?)null;
             },

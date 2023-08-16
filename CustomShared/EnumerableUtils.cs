@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -480,7 +481,7 @@ public static class EnumerableUtils
     public static int GetHashCodeByItems<T>(
         this IEnumerable<T> enumerable)
     {
-        unchecked
+        unchecked // if addition overflows, will wrap and not throw exception
         {
             var hash = 19;
             foreach (T item in enumerable)
@@ -520,7 +521,7 @@ public static class EnumerableUtils
         var prior = enumerator.Current;
 
         yield return prior;
-        
+
         while (enumerator.MoveNext())
         {
             var curr = enumerator.Current;
@@ -535,6 +536,30 @@ public static class EnumerableUtils
 
             yield return curr;
         }
+    }
+
+    public static IEnumerable<T> Concat<T>(
+        params IEnumerable<T>[] nullableCollections)
+    {
+        return nullableCollections.Where(nc => nc != null)
+            .SelectMany(nc => nc);
+    }
+
+    public static bool IsEnumerable(
+        this object o)
+    {
+        if (o == null) return false;
+        return o is IEnumerable
+               // need to check if generic type since string is enumerable char
+               && o.GetType().IsGenericType;
+    }
+
+    public static bool IsList(this object o)
+    {
+        if (o == null) return false;
+        return o is IList &&
+               o.GetType().IsGenericType &&
+               o.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(List<>));
     }
 }
 

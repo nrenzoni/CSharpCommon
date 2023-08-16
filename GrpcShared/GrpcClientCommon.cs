@@ -1,20 +1,24 @@
+using System.Collections;
 using System.IO.Compression;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using CustomShared;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Grpc.Net.Compression;
 using Microsoft.Extensions.Logging;
+using Type = System.Type;
 
 namespace GrpcShared;
 
 public class GrpcClientCommon
 {
-    public static GrpcChannel BuildGrpcChannel(
-        string connectionString)
+    public static GrpcChannel BuildGrpcChannel(string connectionString)
     {
         var loggerFactory = LoggerFactory.Create(
-            logging =>
-            {
+            logging => {
                 logging.AddConsole();
                 logging.SetMinimumLevel(LogLevel.Trace);
             });
@@ -42,6 +46,43 @@ public class GrpcClientCommon
             });
 
         return channel;
+    }
+
+    public static bool AllPropertiesNullOrEmpty<T>(T inObj)
+        where T : class?
+    {
+        if (inObj == null)
+            return false;
+
+        foreach (var propertyInfo in
+                 typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        {
+            var type = propertyInfo.PropertyType;
+
+            if (type.IsPrimitive || type.IsEnum)
+            {
+                return false;
+            }
+
+            var value = propertyInfo.GetValue(inObj);
+
+            if (value.IsEnumerable())
+            {
+                var x = value as ICollection;
+                if (x.Count != 0)
+                    return false;
+            }
+            else if (value is IMessage imsg)
+            {
+                var innerMsgNullOrEmpty
+                    = AllPropertiesNullOrEmpty(imsg);
+
+                if (!innerMsgNullOrEmpty)
+                    return false;
+            }
+        }
+
+        return true;
     }
 }
 
@@ -75,36 +116,11 @@ public abstract class GrpcClientWrapperBase<T> : IDisposable
         Func<TReturn, TReturnConverted> outGrpcCallConverter,
         [CallerMemberName] string methodName = "")
     {
-        const string asyncKeyword = "Async";
-        if (!methodName.EndsWith(asyncKeyword))
-            throw new Exception($"Only methods ending with {asyncKeyword} currently supported.");
-
-        object[]? args = null;
-
-        var clientType = Client.GetType();
-
-        var methodInfo = clientType.GetMethod(methodName);
-
-        if (methodInfo is null)
-            throw new Exception($"Method {methodName} not found in type {clientType}.");
-
-        var methodParameterInfos = methodInfo.GetParameters();
-
-        if (methodParameterInfos.Any())
-        {
-            throw new Exception(
-                $"Method {methodName} has {methodParameterInfos.Length} parameters, but was attempted to be invoked with none.");
-        }
-
-        var resultTask = (Task<TReturn>)methodInfo.Invoke(
-            Client,
-            args)!;
-
-        await resultTask;
-
-        var resultResult = resultTask.Result;
-
-        return outGrpcCallConverter(resultResult);
+        return await RequestAndConvertInternal<object, object, TReturn, TReturnConverted>(
+            null,
+            null,
+            outGrpcCallConverter,
+            methodName);
     }
 
     protected async Task<TReturnConverted> RequestAndConvertInternal<TArgIn, TArgConverted, TReturn, TReturnConverted>(
@@ -121,19 +137,20 @@ public abstract class GrpcClientWrapperBase<T> : IDisposable
 
         var methodInfos = clientType.GetMethods();
 
-        var matchingMethods = methodInfos.Where(x => x.Name == methodName
-            && x.GetParameters().Length > 2)
+        var matchingMethods = methodInfos.Where(
+                x => x.Name == methodName
+                     && x.GetParameters().Length > 2)
             .ToList();
 
         if (matchingMethods.Count != 1)
             throw new Exception();
-        
+
         var methodInfo = matchingMethods.First();
 
         if (methodInfo is null)
             throw new Exception($"Method {methodName} not found in type {clientType}.");
-        
-        object[]? args = null;
+
+        object[] args;
 
         if (inputArgs != null)
         {
@@ -148,13 +165,28 @@ public abstract class GrpcClientWrapperBase<T> : IDisposable
                 Type.Missing
             };
         }
-        
+        else
+        {
+            var firstParameterType = methodInfo.GetParameters().First().ParameterType;
+            if (firstParameterType != typeof(Empty))
+                throw new Exception($"Method Not supported");
+
+            // empty protobuf request
+            args = new object[]
+            {
+                new Empty(),
+                Type.Missing,
+                Type.Missing,
+                Type.Missing
+            };
+        }
+
         var resultTask = (AsyncUnaryCall<TReturn>)methodInfo.Invoke(
             Client,
             args)!;
 
         var result = await resultTask;
-        
+
         return outGrpcCallConverter(result);
     }
 

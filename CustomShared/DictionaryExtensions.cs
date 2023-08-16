@@ -23,8 +23,8 @@ public static class DictionaryExtensions
         return stringifyDictionaryToLines;
     }
 
-    public static string StringifyDictionary<K, V>(
-        this IDictionary<K, V> dictionary,
+    public static string StringifyDictionary<TK, TV>(
+        this IDictionary<TK, TV> dictionary,
         bool newLinePerKv = false)
     {
         var lines =
@@ -42,7 +42,8 @@ public static class DictionaryExtensions
 
     public static Dictionary<TKey, object> WithValueAsObj<TKey, TValue>(this Dictionary<TKey, TValue> inDic)
     {
-        return inDic.ToDictionary(kv => kv.Key,
+        return inDic.ToDictionary(
+            kv => kv.Key,
             kv => (object)kv.Value);
     }
 }
