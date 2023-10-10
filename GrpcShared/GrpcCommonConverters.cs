@@ -3,6 +3,7 @@ using CustomShared;
 using NodaTime;
 using DecimalWithInf = CustomShared.DecimalWithInf;
 using LocalDate = NodaTime.LocalDate;
+using LocalTime = NodaTime.LocalTime;
 
 namespace GrpcShared;
 
@@ -96,6 +97,28 @@ public static class GrpcCommonConverters
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    public static CommonProto.LocalTime Convert(
+        LocalTime inLocalTime)
+    {
+        return new CommonProto.LocalTime
+        {
+            Hour = (uint)inLocalTime.Hour,
+            Minute = (uint)inLocalTime.Minute,
+            Second = (uint)inLocalTime.Second,
+            Millisecond = (uint)inLocalTime.Millisecond
+        };
+    }
+
+    public static LocalTime Convert(
+        CommonProto.LocalTime inLocalTime)
+    {
+        return new LocalTime(
+            (int)inLocalTime.Hour,
+            (int)inLocalTime.Minute,
+            (int)inLocalTime.Second,
+            (int)inLocalTime.Millisecond);
     }
 
     public static LocalDate Convert(

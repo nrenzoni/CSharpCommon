@@ -288,10 +288,7 @@ public static class EnumerableUtils
         this IList<T> list,
         IComparer<T> comparer = null)
     {
-        if (comparer == null)
-        {
-            comparer = Comparer<T>.Default;
-        }
+        comparer ??= Comparer<T>.Default;
 
         if (list.Count > 1)
         {
@@ -307,6 +304,51 @@ public static class EnumerableUtils
         }
 
         return true;
+    }
+
+    public static bool IsOrdered<T>(
+        this IEnumerable<T> list,
+        IComparer<T> comparer = null)
+    {
+        comparer ??= Comparer<T>.Default;
+
+        foreach (var (item1, item2) in list.Pairwise())
+        {
+            if (comparer.Compare(
+                    item1,
+                    item2) > 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static IEnumerable<int> GetIndexesOfOutOfOrder<T>(
+        this IEnumerable<T> list,
+        IComparer<T> comparer = null)
+    {
+        comparer ??= Comparer<T>.Default;
+
+        var skipNext = false;
+
+        foreach (var ((item1, item2), i) in list.Pairwise().WithIndex())
+        {
+            if (skipNext)
+            {
+                skipNext = false;
+                continue;
+            }
+
+            if (comparer.Compare(
+                    item1,
+                    item2) > 0)
+            {
+                yield return i;
+                skipNext = true;
+            }
+        }
     }
 
     private static readonly RNGCryptoServiceProvider Random = new();
@@ -555,12 +597,38 @@ public static class EnumerableUtils
                && o.GetType().IsGenericType;
     }
 
-    public static bool IsList(this object o)
+    public static bool IsList(
+        this object o)
     {
         if (o == null) return false;
         return o is IList &&
                o.GetType().IsGenericType &&
                o.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(List<>));
+    }
+
+    public static (List<T>, List<T>) Partition<T>(
+        this IEnumerable<T> source,
+        uint firstPartitionSize)
+    {
+        var en = source.GetEnumerator();
+
+        var firstList = new List<T>((int)firstPartitionSize);
+
+        while (en.MoveNext())
+        {
+            firstList.Add(en.Current);
+        }
+
+        return (
+            firstList,
+            Take(en).ToList());
+    }
+
+    static IEnumerable<T> Take<T>(
+        this IEnumerator<T> en)
+    {
+        while (en.MoveNext())
+            yield return en.Current;
     }
 }
 

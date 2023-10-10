@@ -41,7 +41,7 @@ public class ExceptionFuncs
 
     public static T RunWithRetries<T>(
         Func<T> requestFunc,
-        [CanBeNull] string requestFuncName = null,
+        string? requestFuncName = null,
         uint? retryCount = null,
         TimeSpan? delayBetweenRetries = null)
     {

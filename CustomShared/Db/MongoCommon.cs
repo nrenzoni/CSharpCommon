@@ -10,7 +10,26 @@ namespace CustomShared.Db;
 
 public class MongoSaveSchema : ISaveSchema
 {
+    // no info to pass on save
+
     public static readonly MongoSaveSchema Instance = new();
+}
+
+public class MongoClientFactory
+{
+    private readonly MongoConfiguration _mongoConfiguration;
+
+    public MongoClientFactory(
+        MongoConfiguration mongoConfiguration)
+    {
+        _mongoConfiguration = mongoConfiguration;
+    }
+
+    public MongoClient Create()
+    {
+        return MongoCommon.GetMongoClient(
+            _mongoConfiguration);
+    }
 }
 
 public static class MongoCommon
@@ -191,7 +210,8 @@ public static class MongoCommon
         obj);
 }
 
-public class MongoInterface : IDbInterface<BsonDocument, MongoSaveSchema, MongoDocsWithSchema>
+public class MongoInterface
+    : IRepoSaverForFlushSaver<BsonDocument, MongoSaveSchema>
 {
     private static readonly ILog Log = LogManager.GetLogger(typeof(MongoInterface));
 
@@ -204,7 +224,7 @@ public class MongoInterface : IDbInterface<BsonDocument, MongoSaveSchema, MongoD
     }
 
     public void Save(
-        MongoDocsWithSchema docsWithSchema)
+        DocsWithSchema<BsonDocument, MongoSaveSchema> docsWithSchema)
     {
         InsertManyOptions insertManyOptions = new()
         {
@@ -240,8 +260,4 @@ public class MongoInterface : IDbInterface<BsonDocument, MongoSaveSchema, MongoD
     }
 
     public string GetName() => "Mongo";
-}
-
-public class MongoDocsWithSchema : DocsWithSchema<BsonDocument, MongoSaveSchema>
-{
 }

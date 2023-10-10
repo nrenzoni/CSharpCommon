@@ -116,8 +116,11 @@ public class MongoTiRetrieverSpecificConfigVariables : ConfigVariables
     public string MongoTradeIdeasAlertsCollection { get; protected set; } = "trade_ideas_alerts";
 
     public string MongoLogEntryCollection { get; protected set; } = "ti_retriever";
-    public uint MongoSaverBatchSize { get; protected set; } = 10000;
-    public uint NMongoSavers { get; protected set; }
+    
+    // public uint MongoSaverBatchSize { get; protected set; } = 10000;
+    
+    // public uint NMongoSavers { get; protected set; }
+    
     public uint NMongoLogFlushSize { get; protected set; } = 1000;
 
     protected new static T MakeTestConfigVariables<T>() where T : MongoTiRetrieverSpecificConfigVariables, new()
@@ -177,6 +180,7 @@ public class ClickhouseTiRetrieverConfigVariables : ClickhouseConfigVariables
     public new static ClickhouseTiRetrieverConfigVariables TestInstance => _testInstance;
 
     public string ClickhouseAlertsTable { get; protected set; } = "ti.alerts";
+    
     public string ClickhouseTopListTable { get; protected set; } = "ti.top_list";
 }
 

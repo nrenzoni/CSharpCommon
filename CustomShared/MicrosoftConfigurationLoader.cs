@@ -1,35 +1,34 @@
 using System;
 using System.Linq;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
 namespace CustomShared;
 
-public class MicrosoftConfigurationLoader
+public static class MicrosoftConfigurationLoader
 {
     public static object GetConfiguration(
         IConfiguration configuration,
         Type type,
-        string sectionName = null)
+        string? sectionName,
+        bool allowDefault)
     {
-        IConfiguration configurationSection;
+        if (sectionName is null)
+            return configuration.Get(type);
+        var configSection = configuration.GetSection(sectionName);
 
-        if (sectionName is not null)
-        {
-            var configSection = configuration.GetSection(sectionName);
+        if (configSection.Exists())
+            return configSection.Get(type);
 
-            if (!configSection.Exists())
-                throw new Exception($"Section {sectionName} of type {type} is not defined in the configuration.");
+        if (!allowDefault)
+            throw new Exception(
+                $"Section {sectionName} of type {type} is not defined or is blank in the configuration.");
 
-            configurationSection = configSection;
-        }
-        else
-            configurationSection = configuration;
-
-        return configurationSection.Get(type);
+        return Activator.CreateInstance(type);
     }
 
     public static T GetConfiguration<T>(
-        IConfiguration configuration,
+        this IConfiguration configuration,
         string sectionName = null)
     {
         var configurationSection =

@@ -9,7 +9,8 @@ public static class AutofacHelpers
 {
     public record ConfigSection(
         Type ConfigType,
-        string? SectionName = null);
+        string? SectionName = null,
+        bool allowDefault = false);
 
     public static void RegisterConfigs(
         ContainerBuilder builder,
@@ -33,11 +34,12 @@ public static class AutofacHelpers
                     lastIndexOfConfig);
             }
 
-            AutofacHelpers.LoadConfigurationsHelper(
+            LoadConfigurationsHelper(
                 builder,
                 configuration,
                 configSection.ConfigType,
-                configSectionName);
+                configSectionName,
+                configSection.allowDefault);
         }
     }
 
@@ -61,13 +63,15 @@ public static class AutofacHelpers
         ContainerBuilder containerBuilder,
         IConfiguration configuration,
         Type configType,
-        string sectionName)
+        string sectionName,
+        bool allowDefault)
     {
         var config =
             MicrosoftConfigurationLoader.GetConfiguration(
                 configuration,
                 configType,
-                sectionName);
+                sectionName,
+                allowDefault);
 
         containerBuilder.RegisterInstance(config)
             .As(configType)

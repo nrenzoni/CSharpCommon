@@ -68,9 +68,11 @@ public class TasksRunner
         IEnumerable<Task> tasksToRun,
         uint? maxTasksToRunInParallel = null,
         int timeoutInMilliseconds = -1,
-        CancellationToken cancellationToken = new(),
+        CancellationToken? cancellationToken = null,
         bool rethrowExceptions = true)
     {
+        cancellationToken ??= new();
+
         // Convert to a list of tasks so that we don't enumerate over it multiple times needlessly.
         var tasks = tasksToRun.ToList();
 
@@ -89,9 +91,9 @@ public class TasksRunner
             // Increment the number of tasks currently running and wait if too many are running.
             limiter.Wait(
                 timeoutInMilliseconds,
-                cancellationToken);
+                cancellationToken.Value);
 
-            cancellationToken.ThrowIfCancellationRequested();
+            cancellationToken.Value.ThrowIfCancellationRequested();
             task.Start();
         }
 

@@ -17,7 +17,8 @@ public class MarketDateRangeUtils
     }
 
     public List<MarketDateRange> BuildMarketDateRangeContiguousDates(
-        ImmutableSortedSet<LocalDate> dates)
+        ImmutableSortedSet<LocalDate> dates,
+        uint? maxDatesPerMarketDateRange = null)
     {
         if (dates.Count == 0)
             return new List<MarketDateRange>();
@@ -26,29 +27,37 @@ public class MarketDateRangeUtils
 
         LocalDate currentMinDate = dates.First();
         LocalDate currentEndDate = currentMinDate;
+        uint currentDateCount = 1;
         foreach (var date in dates.Skip(1))
         {
-            if (_marketDayChecker.GetNextOpenDay(currentEndDate) != date)
+            if (_marketDayChecker.GetNextOpenDay(currentEndDate) != date
+                || currentDateCount >= maxDatesPerMarketDateRange)
             {
                 uncontainedMarketDateRanges.Add(
-                    new(currentMinDate, currentEndDate));
+                    new(
+                        currentMinDate,
+                        currentEndDate));
 
                 currentMinDate = date;
+                currentDateCount = 0;
             }
 
             currentEndDate = date;
+            currentDateCount++;
         }
 
         if (uncontainedMarketDateRanges.Count == 0
             || !uncontainedMarketDateRanges.Last().ContainsDate(currentEndDate))
         {
             uncontainedMarketDateRanges.Add(
-                new(currentMinDate, currentEndDate));
+                new(
+                    currentMinDate,
+                    currentEndDate));
         }
 
         return uncontainedMarketDateRanges;
     }
-    
+
     public IEnumerable<LocalDate> IterateDays(
         MarketDateRange marketDateRange,
         bool marketDayOffset = true)
@@ -59,12 +68,14 @@ public class MarketDateRangeUtils
                 = (
                     startDate,
                     endDate) => _marketDayChecker.GetMarketOpenDaysInRangeInclLast(
-                    startDate, endDate);
+                    startDate,
+                    endDate);
         else
             getDaysInRangeFunc
                 = DateUtils.RangeOfDatesInclLast;
 
         return getDaysInRangeFunc(
-            marketDateRange.StartDate, marketDateRange.EndDate);
+            marketDateRange.StartDate,
+            marketDateRange.EndDate);
     }
 }

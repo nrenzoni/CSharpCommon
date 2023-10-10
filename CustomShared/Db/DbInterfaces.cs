@@ -2,26 +2,29 @@
 
 namespace CustomShared.Db;
 
-public interface IDbInterface<TType, TSchema, TDocsWithSchema>
+public interface IRepoSaverForFlushSaver<TType, TSchema>
     where TSchema : ISaveSchema
-    where TDocsWithSchema : DocsWithSchema<TType, TSchema>
 {
-    public void Save(TDocsWithSchema docsWithSchema);
+    public void Save(
+        DocsWithSchema<TType, TSchema> docsWithSchema);
 
     public string GetName();
 }
 
 public interface IDbTableChecker
 {
-    public bool TableExists(string tableName);
+    public bool TableExists(
+        string tableName);
 }
 
 public interface ISaveSchema
 {
 }
 
-public class DocsWithSchema<TDocs, TSchema> where TSchema : ISaveSchema
+public class DocsWithSchema<TDocs, TSchema>
+    where TSchema : ISaveSchema
 {
     public TSchema SaveSchema { get; set; }
+
     public IEnumerable<TDocs> Docs { get; set; }
 }

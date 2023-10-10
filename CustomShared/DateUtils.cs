@@ -295,20 +295,17 @@ public static class DateUtils
         return dates;
     }
 
-    public static List<LocalDate> RangeOfDatesExclLast(
+    public static IEnumerable<LocalDate> RangeOfDatesExclLast(
         LocalDate beginDate,
         LocalDate endDateExcl)
     {
-        List<LocalDate> dates = new();
         var oneDay = Period.FromDays(1);
         var date = beginDate;
         while (date < endDateExcl)
         {
-            dates.Add(date);
+            yield return date;
             date += oneDay;
         }
-
-        return dates;
     }
 
     public static IEnumerable<Instant> GetInstantsInRange(
