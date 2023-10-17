@@ -12,8 +12,8 @@ public class TasksRunner
     private static readonly ILog Log = LogManager.GetLogger(typeof(TasksRunner));
 
     // custom wrapper func since Task.WaitAll doesn't elegantly handle thrown exceptions
-    public static void WaitForAllTasksToComplete<T>(
-        IList<T> tasks) where T : Task
+    public static void WaitForAllTasksToComplete<T>(IList<T> tasks)
+        where T : Task
     {
         var tempTasksList = new List<T>(tasks);
 
@@ -94,6 +94,47 @@ public class TasksRunner
                 cancellationToken.Value);
 
             cancellationToken.Value.ThrowIfCancellationRequested();
+            task.Start();
+        }
+
+        // Wait for all of the provided tasks to complete.
+        // We wait on the list of "post" tasks instead of the original tasks, otherwise there is a potential race condition where the throttler's using block is exited before some Tasks have had their "post" action completed, which references the throttler, resulting in an exception due to accessing a disposed object.
+        WaitForAllTasksToComplete(
+            postTaskTasks);
+    }
+
+    public static void StartAndWaitTasksWithConcurrentLimiterWithRerunTaskOnTimeout(
+        IEnumerable<Action> actions,
+        uint? maxTasksToRunInParallel = null,
+        TimeSpan timeout = default,
+        CancellationToken cancellationToken = new(),
+        bool rethrowExceptions = true)
+    {
+        // Convert to a list of tasks so that we don't enumerate over it multiple times needlessly.
+        var actionsList = actions.ToList();
+
+        using var limiter = new SemaphoreSlim((int)(maxTasksToRunInParallel ?? 100));
+
+        var postTaskTasks = new List<Task>();
+
+        // Start running each task.
+        foreach (var action in actionsList)
+        {
+            var cts = new CancellationTokenSource(timeout);
+
+            var task = new Task(
+                action,
+                cts.Token);
+
+            var finalTask = task.ContinueWith(_ => limiter.Release());
+            postTaskTasks.Add(finalTask);
+
+
+            // Increment the number of tasks currently running and wait if too many are running.
+            limiter.Wait(cancellationToken);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
             task.Start();
         }
 

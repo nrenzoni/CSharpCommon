@@ -143,7 +143,7 @@ public abstract class GrpcClientWrapperBase<T> : IDisposable
             .ToList();
 
         if (matchingMethods.Count != 1)
-            throw new Exception();
+            throw new Exception($"No matching service method found for {methodName}.");
 
         var methodInfo = matchingMethods.First();
 

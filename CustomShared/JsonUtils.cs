@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using log4net;
 using Newtonsoft.Json;
 using System.IO;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
@@ -25,9 +27,12 @@ public class JsonUtils
         JsonSerializerSettings.TypeNameHandling = TypeNameHandling.Auto;
 
         JsonSerializerSettings.Converters.Add(new ComplexDictionaryKeyCustomConverter());
+
+        JsonSerializerSettings.Converters.Add(new NestedDictionaryConverter());
     }
 
-    private static JsonSerializerSettings GetJsonSerializerSettings(params JsonConverter[] extraConverters)
+    private static JsonSerializerSettings GetJsonSerializerSettings(
+        params JsonConverter[] extraConverters)
     {
         if (extraConverters == null)
             return JsonSerializerSettings;
@@ -171,9 +176,57 @@ public class ComplexDictionaryKeyCustomConverter
     }
 
     // only handle dictionaries with complex key type, otherwise uses default dictionary converter 
-    public override bool CanConvert(Type objectType)
+    public override bool CanConvert(
+        Type objectType)
     {
         return objectType.IsDictionaryType()
+                // check key type
                && !objectType.GenericTypeArguments[0].IsSimple();
+    }
+}
+
+// allow nested conversion to dictionary
+class NestedDictionaryConverter : CustomCreationConverter<IDictionary<string, object>>
+{
+    public override IDictionary<string, object> Create(
+        Type objectType)
+    {
+        return new Dictionary<string, object>();
+    }
+
+    public override bool CanConvert(
+        Type objectType)
+    {
+        // in addition to handling IDictionary<string, object>
+        // we want to handle the deserialization of dict value
+        // which is of type object
+        return objectType == typeof(object) || base.CanConvert(objectType);
+    }
+
+    public override object ReadJson(
+        JsonReader reader,
+        Type objectType,
+        object existingValue,
+        JsonSerializer serializer)
+    {
+        return reader.TokenType switch
+        {
+            JsonToken.StartObject or JsonToken.Null
+                => base.ReadJson(
+                    reader,
+                    objectType,
+                    existingValue,
+                    serializer),
+
+            //if it's an array serialize it as a list of dictionaries
+            JsonToken.StartArray
+                => serializer.Deserialize(
+                    reader,
+                    typeof(List<Dictionary<string, object>>)),
+
+            // if the next token is not an object
+            // then fall back on standard deserializer (strings, numbers etc.)
+            _ => serializer.Deserialize(reader)
+        };
     }
 }

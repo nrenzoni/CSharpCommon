@@ -31,8 +31,7 @@ public class Tests
 
         // A simple blocking consumer with no cancellation.
         Task.Run(
-            () =>
-            {
+            () => {
                 int i;
                 while (!numbers.IsCompleted)
                 {
@@ -60,8 +59,7 @@ public class Tests
 
         // A simple blocking producer with no cancellation.
         Task.Run(
-            () =>
-            {
+            () => {
                 for (int i = 0; i < itemsToAdd; i++)
                 {
                     numbers.Add(i);
@@ -77,5 +75,29 @@ public class Tests
 
         // Keep the console display open in debug mode.
         Console.ReadLine();
+    }
+
+    [Test]
+    public void TaskRunStartOnInitOrDelayed_exp()
+    {
+        var x = 5;
+        var y = 10;
+
+        var task = new Task(
+            () => {
+                Thread.Sleep(1000);
+                x++;
+            });
+
+        // task.Start();
+        task.Wait();
+
+        var task1 = Task.Run(
+            () => {
+                Thread.Sleep(1000);
+                return y++;
+            });
+
+        task1.Wait();
     }
 }

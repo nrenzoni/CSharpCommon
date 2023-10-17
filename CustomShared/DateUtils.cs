@@ -60,6 +60,10 @@ public static class DateUtils
             dateTime,
             DateTimeKind.Utc);
 
+    public static DateTime AsDateTimeInNyTz(
+        this Instant instant)
+        => instant.InZone(NyDateTz).ToDateTimeUnspecified();
+
     public static ZonedDateTime CreateNyDateTime(
         this DateTime dateTime,
         bool nyTimeAlready = false)
@@ -269,11 +273,14 @@ public static class DateUtils
         return times;
     }
 
+    public static ZonedDateTime GetNyZonedTime(
+        this Instant instant) => instant.InZone(NyDateTz);
+
     public static LocalDate GetNyDate(
-        this Instant instant) => instant.InZone(NyDateTz).Date;
+        this Instant instant) => GetNyZonedTime(instant).Date;
 
     public static LocalTime GetNyLocalTime(
-        this Instant instant) => instant.InZone(NyDateTz).TimeOfDay;
+        this Instant instant) => GetNyZonedTime(instant).TimeOfDay;
 
     public static ZonedDateTime ToNyTime(
         this LocalDateTime localDateTime)
